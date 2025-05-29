@@ -29,7 +29,6 @@ class CheckJobTrainingCertificate extends LockableProcedure
     public string $number;
 
     public function __construct(
-        private readonly StudentRepository $studentRepository,
         private readonly CertificateRepository $certificateRepository,
         private readonly Security $security,
     ) {
@@ -37,17 +36,9 @@ class CheckJobTrainingCertificate extends LockableProcedure
 
     public function execute(): array
     {
-        $student = $this->studentRepository->findOneBy([
-            'realName' => $this->name,
-            'idCardNumber' => $this->idcard,
-        ]);
-        if (!$student) {
-            throw new ApiException('找不到学员信息');
-        }
-
         $cert = $this->certificateRepository->findOneBy([
             'id' => $this->number,
-            'student' => $student,
+            'user' => $this->security->getUser(),
         ]);
         if (!$cert) {
             throw new ApiException('找不到证书信息');
@@ -60,7 +51,7 @@ class CheckJobTrainingCertificate extends LockableProcedure
         ];
     }
 
-    protected function getLockResource(JsonRpcParams $params): array
+    public function getLockResource(JsonRpcParams $params): ?array
     {
         return [
             $this->security->getUser()->getUserIdentifier(),
