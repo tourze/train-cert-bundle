@@ -4,7 +4,6 @@ namespace Tourze\TrainCertBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
 use Tourze\TrainCertBundle\Entity\CertificateTemplate;
 
 /**
@@ -17,8 +16,6 @@ use Tourze\TrainCertBundle\Entity\CertificateTemplate;
  */
 class CertificateTemplateRepository extends ServiceEntityRepository
 {
-    use CommonRepositoryAware;
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, CertificateTemplate::class);

@@ -2,8 +2,6 @@
 
 namespace Tourze\TrainCertBundle\Procedure;
 
-use SenboTrainingBundle\Repository\CertificateRepository;
-use SenboTrainingBundle\Repository\StudentRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
@@ -13,6 +11,7 @@ use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
 use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 use Tourze\JsonRPCLogBundle\Attribute\Log;
+use Tourze\TrainCertBundle\Repository\CertificateRepository;
 
 #[MethodDoc('查询证件信息')]
 #[MethodExpose('CheckJobTrainingCertificate')]

@@ -4,8 +4,7 @@ namespace Tourze\TrainCertBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
-use SenboTrainingBundle\Entity\Certificate;
+use Tourze\TrainCertBundle\Entity\Certificate;
 
 /**
  * @method Certificate|null find($id, $lockMode = null, $lockVersion = null)
@@ -15,8 +14,6 @@ use SenboTrainingBundle\Entity\Certificate;
  */
 class CertificateRepository extends ServiceEntityRepository
 {
-    use CommonRepositoryAware;
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Certificate::class);
