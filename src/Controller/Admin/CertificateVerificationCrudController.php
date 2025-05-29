@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\TrainCertBundle\Admin;
+namespace Tourze\TrainCertBundle\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;

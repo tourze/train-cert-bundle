@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\TrainCertBundle\Admin;
+namespace Tourze\TrainCertBundle\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;

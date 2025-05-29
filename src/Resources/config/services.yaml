@@ -5,5 +5,13 @@ services:
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
     public: false
 
-#  Tourze\TrainCertBundle\EventSubscriber\:
-#    resource: '../../EventSubscriber/'
+  Tourze\TrainCertBundle\Command\:
+    resource: '../../Command/'
+  Tourze\TrainCertBundle\Controller\:
+    resource: '../../Controller/'
+  Tourze\TrainCertBundle\Procedure\:
+    resource: '../../Procedure/'
+  Tourze\TrainCertBundle\Repository\:
+    resource: '../../Repository/'
+  Tourze\TrainCertBundle\Service\:
+    resource: '../../Service/'

@@ -21,12 +21,12 @@ class GenerateCertificateImageCommand extends Command
     {
         // 不同环境用不同的执行文件
         $projectRoot = $this->kernel->getProjectDir();
-        if (mb_stristr(PHP_OS, 'DAR')) {
+        if (stristr(PHP_OS, 'DAR')) {
             $binFile = $projectRoot . '/vendor/suhanyu/wkhtmltopdf-amd64-mac-os/bin/wkhtmltoimage';
             @system("chmod +x {$binFile}");
-        } elseif (mb_stristr(PHP_OS, 'WIN')) {
+        } elseif (stristr(PHP_OS, 'WIN')) {
             $binFile = $projectRoot . '/vendor/wemersonjanuario/wkhtmltopdf-windows/bin/64bit/wkhtmltoimage.exe';
-        } elseif (mb_stristr(PHP_OS, 'LINUX')) {
+        } elseif (stristr(PHP_OS, 'LINUX')) {
             $binFile = $projectRoot . '/vendor/h4cc/wkhtmltoimage-amd64/bin/wkhtmltoimage-amd64';
             @system("chmod +x {$binFile}");
         } else {
