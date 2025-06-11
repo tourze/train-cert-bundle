@@ -105,7 +105,7 @@ class CertificateCleanupCommand extends Command
 
             return Command::SUCCESS;
 
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $io->error(sprintf('清理任务失败: %s', $e->getMessage()));
             $this->logger->error('证书清理任务失败', ['error' => $e]);
             return Command::FAILURE;
@@ -259,7 +259,7 @@ class CertificateCleanupCommand extends Command
                 $deleted += count($batch);
                 $io->progressAdvance(count($batch));
 
-            } catch  (\Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->logger->error('清理过期证书记录失败', [
                     'batchSize' => count($batch),
                     'error' => $e,
@@ -302,7 +302,7 @@ class CertificateCleanupCommand extends Command
                 $deleted += count($batch);
                 $io->progressAdvance(count($batch));
 
-            } catch  (\Throwable $e) {
+            } catch (\Throwable $e) {
                 $this->logger->error('清理验证记录失败', [
                     'batchSize' => count($batch),
                     'error' => $e,

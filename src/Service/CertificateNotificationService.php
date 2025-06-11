@@ -52,7 +52,7 @@ class CertificateNotificationService
                 'recipient' => $user->getUserIdentifier(),
             ]);
 
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('发送证书发放通知失败', [
                 'certificateId' => $certificateId,
                 'error' => $e->getMessage(),
@@ -92,7 +92,7 @@ class CertificateNotificationService
                 'verificationResult' => $verificationData['valid'] ?? false,
             ]);
 
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('发送证书验证通知失败', [
                 'certificateId' => $certificateId,
                 'error' => $e->getMessage(),
@@ -120,7 +120,7 @@ class CertificateNotificationService
                 'days' => $days,
             ]);
 
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('发送证书过期提醒失败', [
                 'error' => $e->getMessage(),
             ]);
@@ -153,7 +153,7 @@ class CertificateNotificationService
                 'remainingDays' => $record->getRemainingDays(),
             ]);
 
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('发送单个证书过期提醒失败', [
                 'certificateId' => $record->getCertificate()->getId(),
                 'error' => $e->getMessage(),
@@ -193,7 +193,7 @@ class CertificateNotificationService
                 'reason' => $reason,
             ]);
 
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('发送证书撤销通知失败', [
                 'certificateId' => $certificateId,
                 'error' => $e->getMessage(),
