@@ -92,7 +92,7 @@ class CertificateGeneratorService
             try {
                 $certificate = $this->generateSingleCertificate($userId, $templateId, $config);
                 $certificates[] = $certificate;
-            } catch (\Exception $e) {
+            } catch  (\Throwable $e) {
                 // 记录错误但继续处理其他用户
                 error_log("生成证书失败 - 用户ID: {$userId}, 错误: " . $e->getMessage());
             }

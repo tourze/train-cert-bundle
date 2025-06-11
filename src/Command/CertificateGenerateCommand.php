@@ -144,7 +144,7 @@ class CertificateGenerateCommand extends Command
             }
 
             return true;
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $io->error(sprintf('验证模板失败: %s', $e->getMessage()));
             $this->logger->error('验证模板失败', ['templateId' => $templateId, 'error' => $e]);
             return false;
@@ -190,7 +190,7 @@ class CertificateGenerateCommand extends Command
                     $successCount++;
                     $io->progressAdvance();
 
-                } catch (\Exception $e) {
+                } catch  (\Throwable $e) {
                     $failureCount++;
                     $io->progressAdvance();
 

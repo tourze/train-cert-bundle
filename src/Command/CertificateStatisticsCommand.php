@@ -100,7 +100,7 @@ class CertificateStatisticsCommand extends Command
 
             return Command::SUCCESS;
 
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $io->error(sprintf('生成统计报告失败: %s', $e->getMessage()));
             $this->logger->error('生成统计报告失败', ['error' => $e]);
             return Command::FAILURE;
