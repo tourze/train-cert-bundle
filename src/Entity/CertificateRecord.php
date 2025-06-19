@@ -8,43 +8,20 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
-use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
-use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Filter\Keyword;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
 /**
  * 证书记录实体
  * 用于记录证书的详细信息，包括证书编号、有效期、验证码等核心数据
  */
-#[AsPermission(title: '证书记录')]
-#[Deletable]
 #[ORM\Entity]
 #[ORM\Table(name: 'job_training_certificate_record', options: ['comment' => '证书记录'])]
 class CertificateRecord implements ApiArrayInterface
 {
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
+    use BlameableAware;
+
     #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
@@ -52,94 +29,44 @@ class CertificateRecord implements ApiArrayInterface
     #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
     private ?string $id = null;
 
-    #[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-
-    #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
-
-    #[ListColumn(order: 1)]
-    #[FormField(order: 1)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\OneToOne(targetEntity: Certificate::class)]
     #[ORM\JoinColumn(nullable: false)]
     private Certificate $certificate;
 
-    #[Keyword(inputWidth: 60, label: '证书编号')]
     #[IndexColumn]
-    #[ListColumn(order: 2)]
-    #[FormField(order: 2)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: false, unique: true, options: ['comment' => '证书编号'])]
     private string $certificateNumber;
 
-    #[Keyword(inputWidth: 60, label: '证书类型')]
-    #[ListColumn(order: 3)]
-    #[FormField(order: 3)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '证书类型'])]
     private string $certificateType;
 
-    #[Filterable]
-    #[ListColumn(order: 4, sorter: true)]
-    #[FormField(order: 4)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: false, options: ['comment' => '发证日期'])]
     private \DateTimeInterface $issueDate;
 
-    #[Filterable]
-    #[ListColumn(order: 5, sorter: true)]
-    #[FormField(order: 5)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true, options: ['comment' => '到期日期'])]
     private ?\DateTimeInterface $expiryDate = null;
 
-    #[ListColumn(order: 6)]
-    #[FormField(order: 6)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 200, nullable: false, options: ['comment' => '发证机构'])]
     private string $issuingAuthority;
 
-    #[Keyword(inputWidth: 60, label: '验证码')]
     #[IndexColumn]
-    #[ListColumn(order: 7)]
-    #[FormField(order: 7)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: false, unique: true, options: ['comment' => '验证码'])]
     private string $verificationCode;
 
-    #[FormField(order: 8)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '元数据'])]
-    private ?array $metadata = null;public function getId(): ?string
+    private ?array $metadata = null;
+
+    public function getId(): ?string
     {
         return $this->id;
-    }
-
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-        return $this;
-    }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
     }
 
     public function getCertificate(): Certificate
@@ -238,7 +165,7 @@ class CertificateRecord implements ApiArrayInterface
         if ($this->expiryDate === null) {
             return false;
         }
-        
+
         return $this->expiryDate < new \DateTime();
     }
 
@@ -250,10 +177,10 @@ class CertificateRecord implements ApiArrayInterface
         if ($this->expiryDate === null) {
             return null;
         }
-        
+
         $now = new \DateTime();
         $diff = $now->diff($this->expiryDate);
-        
+
         return $diff->invert ? -$diff->days : $diff->days;
     }
 
@@ -275,4 +202,9 @@ class CertificateRecord implements ApiArrayInterface
             'remainingDays' => $this->getRemainingDays(),
         ];
     }
-} 
+
+    public function __toString(): string
+    {
+        return (string)$this->id;
+    }
+}

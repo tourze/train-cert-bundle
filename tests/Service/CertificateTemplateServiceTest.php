@@ -140,8 +140,6 @@ class CertificateTemplateServiceTest extends TestCase
 
         $data = ['userName' => '张三', 'courseName' => '安全培训'];
         $result = $this->service->renderCertificate($templateId, $data);
-
-        $this->assertIsString($result);
         $this->assertStringContainsString('测试模板', $result);
     }
 
@@ -176,8 +174,6 @@ class CertificateTemplateServiceTest extends TestCase
 
         $sampleData = ['userName' => '示例用户'];
         $result = $this->service->previewTemplate($templateId, $sampleData);
-
-        $this->assertIsString($result);
         $this->assertStringContainsString('预览模板', $result);
     }
 
@@ -194,8 +190,6 @@ class CertificateTemplateServiceTest extends TestCase
             ->willReturn($template);
 
         $result = $this->service->validateTemplate($templateId);
-
-        $this->assertIsArray($result);
         $this->assertArrayHasKey('valid', $result);
         $this->assertArrayHasKey('errors', $result);
         $this->assertArrayHasKey('warnings', $result);

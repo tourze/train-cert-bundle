@@ -23,7 +23,9 @@ use Tourze\TrainCertBundle\Service\CertificateVerificationService;
 )]
 class CertificateStatisticsCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'certificate:statistics';
+public function __construct(
         private readonly CertificateRepository $certificateRepository,
         private readonly CertificateRecordRepository $recordRepository,
         private readonly CertificateVerificationService $verificationService,
@@ -74,13 +76,13 @@ class CertificateStatisticsCommand extends Command
 
             $io->title('证书统计报告');
 
-            if ($startDate) {
+            if ((bool) $startDate) {
                 $io->info(sprintf('开始日期: %s', $startDate->format('Y-m-d')));
             }
-            if ($endDate) {
+            if ((bool) $endDate) {
                 $io->info(sprintf('结束日期: %s', $endDate->format('Y-m-d')));
             }
-            if ($type) {
+            if ((bool) $type) {
                 $io->info(sprintf('证书类型: %s', $type));
             }
 
@@ -315,7 +317,7 @@ class CertificateStatisticsCommand extends Command
     {
         $json = json_encode($statistics, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
-        if ($outputFile) {
+        if ((bool) $outputFile) {
             file_put_contents($outputFile, $json);
             $io->success(sprintf('统计报告已保存到: %s', $outputFile));
         } else {
@@ -356,7 +358,7 @@ class CertificateStatisticsCommand extends Command
             $csvData[] = ['类型', $key, $value];
         }
 
-        if ($outputFile) {
+        if ((bool) $outputFile) {
             $fp = fopen($outputFile, 'w');
             foreach ($csvData as $row) {
                 fputcsv($fp, $row);

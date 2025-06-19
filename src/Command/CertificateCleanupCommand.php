@@ -23,7 +23,9 @@ use Tourze\TrainCertBundle\Repository\CertificateVerificationRepository;
 )]
 class CertificateCleanupCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'certificate:cleanup';
+public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly CertificateRecordRepository $recordRepository,
         private readonly CertificateVerificationRepository $verificationRepository,
@@ -69,12 +71,12 @@ class CertificateCleanupCommand extends Command
             $expiredDays = (int) $input->getOption('expired-days');
             $verificationDays = (int) $input->getOption('verification-days');
             $batchSize = (int) $input->getOption('batch-size');
-            $isDryRun = $input->getOption('dry-run');
-            $isForce = $input->getOption('force');
+            $isDryRun = (bool) $input->getOption('dry-run');
+            $isForce = (bool) $input->getOption('force');
 
             $io->title('证书数据清理');
 
-            if ($isDryRun) {
+            if ((bool) $isDryRun) {
                 $io->warning('试运行模式 - 不会实际删除数据');
             }
 
@@ -84,7 +86,7 @@ class CertificateCleanupCommand extends Command
             $this->displayCleanupPlan($cleanupStats, $io);
 
             // 确认执行
-            if (!$isForce && !$isDryRun) {
+            if (!$isForce && (bool) !$isDryRun) {
                 if (!$io->confirm('确认执行清理操作？此操作不可逆！', false)) {
                     $io->info('操作已取消');
                     return Command::SUCCESS;

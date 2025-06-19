@@ -171,7 +171,7 @@ class CertificateService
             'title' => $application->getTemplate()->getTemplateName(),
         ]);
 
-        if ($existingCertificate) {
+        if ((bool) $existingCertificate) {
             throw new \InvalidArgumentException('该用户已拥有此类型证书');
         }
 

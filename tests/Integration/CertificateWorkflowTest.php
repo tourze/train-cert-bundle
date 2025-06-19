@@ -36,7 +36,7 @@ class CertificateWorkflowTest extends TestCase
         $application->setApplicationStatus('pending');
         $application->setApplicationData(['userName' => '张三', 'idCard' => '123456789']);
         $application->setRequiredDocuments(['身份证', '培训证明']);
-        $application->setApplicationTime(new \DateTime());
+        $application->setApplicationTime(new \DateTimeImmutable());
 
         $this->assertInstanceOf(CertificateApplication::class, $application);
         $this->assertEquals('pending', $application->getApplicationStatus());
@@ -45,7 +45,7 @@ class CertificateWorkflowTest extends TestCase
         // 3. 模拟审核通过
         $application->setApplicationStatus('approved');
         $application->setReviewComment('审核通过');
-        $application->setReviewTime(new \DateTime());
+        $application->setReviewTime(new \DateTimeImmutable());
 
         $this->assertEquals('approved', $application->getApplicationStatus());
         $this->assertEquals('审核通过', $application->getReviewComment());
@@ -79,12 +79,12 @@ class CertificateWorkflowTest extends TestCase
         $application->setApplicationType('standard');
         $application->setApplicationStatus('pending');
         $application->setApplicationData(['userName' => '李四']);
-        $application->setApplicationTime(new \DateTime());
+        $application->setApplicationTime(new \DateTimeImmutable());
 
         // 模拟审核拒绝
         $application->setApplicationStatus('rejected');
         $application->setReviewComment('材料不齐全');
-        $application->setReviewTime(new \DateTime());
+        $application->setReviewTime(new \DateTimeImmutable());
 
         $this->assertEquals('rejected', $application->getApplicationStatus());
         $this->assertEquals('材料不齐全', $application->getReviewComment());

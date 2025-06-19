@@ -23,7 +23,9 @@ use Tourze\TrainCertBundle\Service\CertificateTemplateService;
 )]
 class CertificateGenerateCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'certificate:generate';
+public function __construct(
         private readonly CertificateGeneratorService $generatorService,
         private readonly CertificateTemplateService $templateService,
         private readonly LoggerInterface $logger
@@ -64,9 +66,9 @@ class CertificateGenerateCommand extends Command
         $templateId = $input->getArgument('template-id');
         $userIds = $this->getUserIds($input);
         $batchSize = (int) $input->getOption('batch-size');
-        $isDryRun = $input->getOption('dry-run');
+        $isDryRun = (bool) $input->getOption('dry-run');
 
-        if (empty($userIds)) {
+        if ((bool) empty($userIds)) {
             $io->error('必须提供用户ID列表');
             return Command::FAILURE;
         }
@@ -81,7 +83,7 @@ class CertificateGenerateCommand extends Command
         $io->info(sprintf('用户数量: %d', count($userIds)));
         $io->info(sprintf('批处理大小: %d', $batchSize));
 
-        if ($isDryRun) {
+        if ((bool) $isDryRun) {
             $io->warning('试运行模式 - 不会实际生成证书');
         }
 
@@ -101,12 +103,14 @@ class CertificateGenerateCommand extends Command
         $userIds = [];
 
         // 从命令行参数获取
-        if ($userIdsOption = $input->getOption('user-ids')) {
+        $userIdsOption = $input->getOption('user-ids');
+        if (!empty($userIdsOption)) {
             $userIds = array_map('trim', explode(',', $userIdsOption));
         }
 
         // 从文件获取
-        if ($userFile = $input->getOption('user-file')) {
+        $userFile = $input->getOption('user-file');
+        if (!empty($userFile)) {
             if (!file_exists($userFile)) {
                 throw new \InvalidArgumentException("用户文件不存在: {$userFile}");
             }

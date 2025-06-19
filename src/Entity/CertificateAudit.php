@@ -8,45 +8,21 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
-use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
-use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Filter\Keyword;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\TrainCertBundle\Repository\CertificateAuditRepository;
 
 /**
  * 证书审核实体
  * 用于记录证书申请的审核过程，包括审核状态、审核意见等信息
  */
-#[AsPermission(title: '证书审核')]
-#[Deletable]
 #[ORM\Entity(repositoryClass: CertificateAuditRepository::class)]
 #[ORM\Table(name: 'job_training_certificate_audit', options: ['comment' => '证书审核记录'])]
 class CertificateAudit implements ApiArrayInterface, \Stringable
 {
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
+    use BlameableAware;
+
     #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
@@ -54,61 +30,34 @@ class CertificateAudit implements ApiArrayInterface, \Stringable
     #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
     private ?string $id = null;
 
-    #[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-
-    #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
-
-    #[ListColumn(order: 1)]
-    #[FormField(order: 1)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\ManyToOne(targetEntity: CertificateApplication::class)]
     #[ORM\JoinColumn(nullable: false)]
     private CertificateApplication $application;
 
     #[IndexColumn]
-    #[TrackColumn]
-    #[Keyword(inputWidth: 60, label: '审核状态')]
-    #[ListColumn(order: 2)]
-    #[FormField(order: 2)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '审核状态', 'default' => 'pending'])]
     private string $auditStatus = 'pending';
 
-    #[Keyword(inputWidth: 60, label: '审核结果')]
-    #[ListColumn(order: 3)]
-    #[FormField(order: 3)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '审核结果'])]
     private ?string $auditResult = null;
 
-    #[ListColumn(order: 4)]
-    #[FormField(order: 4)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '审核意见'])]
     private ?string $auditComment = null;
 
-    #[FormField(order: 5)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '审核详情'])]
     private ?array $auditDetails = null;
 
-    #[ListColumn(order: 6)]
-    #[FormField(order: 6)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: true, options: ['comment' => '审核人'])]
     private ?string $auditor = null;
 
-    #[Filterable]
-    #[ListColumn(order: 7, sorter: true)]
-    #[FormField(order: 7)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: false, options: ['comment' => '审核时间'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: false, options: ['comment' => '审核时间'])]
     private \DateTimeInterface $auditTime;
 
     public function __construct()
@@ -123,31 +72,11 @@ class CertificateAudit implements ApiArrayInterface, \Stringable
             $this->id ?? 'NEW',
             $this->auditStatus
         );
-    }public function getId(): ?string
+    }
+
+    public function getId(): ?string
     {
         return $this->id;
-    }
-
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-        return $this;
-    }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
     }
 
     public function getApplication(): CertificateApplication
@@ -260,4 +189,4 @@ class CertificateAudit implements ApiArrayInterface, \Stringable
             'isApproved' => $this->isApproved(),
         ];
     }
-} 
+}

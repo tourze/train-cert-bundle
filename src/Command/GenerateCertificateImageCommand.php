@@ -11,7 +11,9 @@ use Symfony\Component\HttpKernel\KernelInterface;
 #[AsCommand(name: 'job-training:generate-certificate-image', description: '生成证书图片')]
 class GenerateCertificateImageCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'job-training:generate-certificate-image';
+public function __construct(
         private readonly KernelInterface $kernel,
     ) {
         parent::__construct();
@@ -21,12 +23,12 @@ class GenerateCertificateImageCommand extends Command
     {
         // 不同环境用不同的执行文件
         $projectRoot = $this->kernel->getProjectDir();
-        if (stristr(PHP_OS, 'DAR')) {
+        if ((bool) stristr(PHP_OS, 'DAR')) {
             $binFile = $projectRoot . '/vendor/suhanyu/wkhtmltopdf-amd64-mac-os/bin/wkhtmltoimage';
             @system("chmod +x {$binFile}");
-        } elseif (stristr(PHP_OS, 'WIN')) {
+        } elseif ((bool) stristr(PHP_OS, 'WIN')) {
             $binFile = $projectRoot . '/vendor/wemersonjanuario/wkhtmltopdf-windows/bin/64bit/wkhtmltoimage.exe';
-        } elseif (stristr(PHP_OS, 'LINUX')) {
+        } elseif ((bool) stristr(PHP_OS, 'LINUX')) {
             $binFile = $projectRoot . '/vendor/h4cc/wkhtmltoimage-amd64/bin/wkhtmltoimage-amd64';
             @system("chmod +x {$binFile}");
         } else {

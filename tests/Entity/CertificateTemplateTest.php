@@ -106,8 +106,6 @@ class CertificateTemplateTest extends TestCase
         $this->template->setIsActive(true);
 
         $apiArray = $this->template->retrieveApiArray();
-
-        $this->assertIsArray($apiArray);
         $this->assertEquals('测试模板', $apiArray['templateName']);
         $this->assertEquals('safety', $apiArray['templateType']);
         $this->assertEquals('/test/path', $apiArray['templatePath']);
@@ -122,7 +120,7 @@ class CertificateTemplateTest extends TestCase
         $template = new CertificateTemplate();
         
         $this->assertInstanceOf(\DateTimeInterface::class, $template->getCreateTime());
-        $this->assertLessThanOrEqual(new \DateTime(), $template->getCreateTime());
+        $this->assertLessThanOrEqual(new \DateTimeImmutable(), $template->getCreateTime());
     }
 
     public function testUpdateTimeIsSetOnConstruction(): void
@@ -130,7 +128,7 @@ class CertificateTemplateTest extends TestCase
         $template = new CertificateTemplate();
         
         $this->assertInstanceOf(\DateTimeInterface::class, $template->getUpdateTime());
-        $this->assertLessThanOrEqual(new \DateTime(), $template->getUpdateTime());
+        $this->assertLessThanOrEqual(new \DateTimeImmutable(), $template->getUpdateTime());
     }
 
     public function testIdIsNullByDefault(): void

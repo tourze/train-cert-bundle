@@ -6,47 +6,22 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\ApiArrayInterface;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
-use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
-use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Filter\Keyword;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
 /**
  * 证书模板实体
  * 用于管理不同类型的证书模板，支持自定义模板配置和字段映射
  */
-#[AsPermission(title: '证书模板')]
-#[Deletable]
 #[ORM\Entity]
 #[ORM\Table(name: 'job_training_certificate_template', options: ['comment' => '证书模板'])]
 class CertificateTemplate implements ApiArrayInterface
 {
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
+    use BlameableAware;
+
     #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
@@ -54,72 +29,45 @@ class CertificateTemplate implements ApiArrayInterface
     #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
     private ?string $id = null;
 
-    #[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
+    public function __construct()
+    {
+        $now = new \DateTimeImmutable();
+        $this->createTime = $now;
+        $this->updateTime = $now;
+    }
 
-    #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
-
-    #[BoolColumn]
-    #[IndexColumn]
     #[TrackColumn]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '是否启用', 'default' => 1])]
-    #[ListColumn(order: 97)]
-    #[FormField(order: 97)]
     private ?bool $isActive = true;
 
-    #[Keyword(inputWidth: 60, label: '模板名称')]
-    #[ListColumn(order: 1)]
-    #[FormField(order: 1)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: false, options: ['comment' => '模板名称'])]
     private string $templateName;
 
-    #[ListColumn(order: 2)]
-    #[FormField(order: 2)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '证书类型'])]
     private string $templateType;
 
-    #[ListColumn(order: 3)]
-    #[FormField(order: 3)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '模板文件路径'])]
     private ?string $templatePath = null;
 
-    #[FormField(order: 4)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '模板配置'])]
     private ?array $templateConfig = null;
 
-    #[FormField(order: 5)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '字段映射配置'])]
     private ?array $fieldMapping = null;
 
-    #[BoolColumn]
-    #[IndexColumn]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '是否默认模板', 'default' => 0])]
-    #[ListColumn(order: 6)]
-    #[FormField(order: 6)]
     private ?bool $isDefault = false;
 
-    #[FormField(order: 7)]
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '模板描述'])]
     private ?string $description = null;
-
-    public function __construct()
-    {
-        $this->createTime = new \DateTime();
-        $this->updateTime = new \DateTime();
-    }
 
     public function __toString(): string
     {
@@ -127,28 +75,6 @@ class CertificateTemplate implements ApiArrayInterface
     }public function getId(): ?string
     {
         return $this->id;
-    }
-
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-        return $this;
-    }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
     }
 
     public function isActive(): ?bool

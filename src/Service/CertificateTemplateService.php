@@ -64,22 +64,22 @@ class CertificateTemplateService
 
         $this->validateTemplateData($templateData);
 
-        if (isset($templateData['templateName'])) {
+        if ((bool) isset($templateData['templateName'])) {
             $template->setTemplateName($templateData['templateName']);
         }
-        if (isset($templateData['templateType'])) {
+        if ((bool) isset($templateData['templateType'])) {
             $template->setTemplateType($templateData['templateType']);
         }
-        if (isset($templateData['templatePath'])) {
+        if ((bool) isset($templateData['templatePath'])) {
             $template->setTemplatePath($templateData['templatePath']);
         }
-        if (isset($templateData['templateConfig'])) {
+        if ((bool) isset($templateData['templateConfig'])) {
             $template->setTemplateConfig($templateData['templateConfig']);
         }
-        if (isset($templateData['fieldMapping'])) {
+        if ((bool) isset($templateData['fieldMapping'])) {
             $template->setFieldMapping($templateData['fieldMapping']);
         }
-        if (isset($templateData['isDefault'])) {
+        if ((bool) isset($templateData['isDefault'])) {
             $template->setIsDefault($templateData['isDefault']);
             
             // 如果设置为默认模板，需要取消其他同类型的默认模板
@@ -87,7 +87,7 @@ class CertificateTemplateService
                 $this->clearDefaultTemplate($template->getTemplateType(), $templateId);
             }
         }
-        if (isset($templateData['isActive'])) {
+        if ((bool) isset($templateData['isActive'])) {
             $template->setIsActive($templateData['isActive']);
         }
 
@@ -164,13 +164,13 @@ class CertificateTemplateService
 
         // 检查模板配置
         $config = $template->getTemplateConfig();
-        if (empty($config)) {
+        if ((bool) empty($config)) {
             $warnings[] = '模板配置为空';
         }
 
         // 检查字段映射
         $fieldMapping = $template->getFieldMapping();
-        if (empty($fieldMapping)) {
+        if ((bool) empty($fieldMapping)) {
             $warnings[] = '字段映射为空';
         }
 
@@ -217,7 +217,7 @@ class CertificateTemplateService
      */
     public function getAvailableTemplates(?string $type = null): array
     {
-        if ($type) {
+        if ((bool) $type) {
             return $this->templateRepository->findByType($type);
         }
 
@@ -232,7 +232,7 @@ class CertificateTemplateService
      */
     public function getDefaultTemplate(?string $type = null): ?CertificateTemplate
     {
-        if ($type) {
+        if ((bool) $type) {
             return $this->templateRepository->findDefaultTemplateByType($type);
         }
 
@@ -278,7 +278,7 @@ class CertificateTemplateService
            ->setParameter('type', $templateType)
            ->setParameter('true', true);
 
-        if ($excludeId) {
+        if ((bool) $excludeId) {
             $qb->andWhere('t.id != :excludeId')
                ->setParameter('excludeId', $excludeId);
         }

@@ -90,7 +90,7 @@ class CertificateVerificationService
     {
         $verification = new CertificateVerification();
         
-        if ($certificate) {
+        if ((bool) $certificate) {
             $verification->setCertificate($certificate);
         }
         
@@ -100,7 +100,7 @@ class CertificateVerificationService
 
         // 获取请求信息
         $request = $this->requestStack->getCurrentRequest();
-        if ($request) {
+        if ((bool) $request) {
             $verification->setIpAddress($request->getClientIp());
             $verification->setUserAgent($request->headers->get('User-Agent'));
             $verification->setVerifierInfo($this->extractVerifierInfo($request));
@@ -187,12 +187,12 @@ class CertificateVerificationService
            ->addSelect('SUM(CASE WHEN v.verificationResult = false THEN 1 ELSE 0 END) as failed_verifications')
            ->from(CertificateVerification::class, 'v');
 
-        if ($startDate) {
+        if ((bool) $startDate) {
             $qb->andWhere('v.verificationTime >= :startDate')
                ->setParameter('startDate', $startDate);
         }
 
-        if ($endDate) {
+        if ((bool) $endDate) {
             $qb->andWhere('v.verificationTime <= :endDate')
                ->setParameter('endDate', $endDate);
         }
