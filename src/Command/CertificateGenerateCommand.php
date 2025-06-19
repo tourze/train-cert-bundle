@@ -18,7 +18,7 @@ use Tourze\TrainCertBundle\Service\CertificateTemplateService;
  * 支持单个和批量证书生成
  */
 #[AsCommand(
-    name: 'certificate:generate',
+    name: self::NAME,
     description: '生成证书',
 )]
 class CertificateGenerateCommand extends Command

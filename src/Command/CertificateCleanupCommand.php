@@ -18,7 +18,7 @@ use Tourze\TrainCertBundle\Repository\CertificateVerificationRepository;
  * 清理过期和无效的证书数据
  */
 #[AsCommand(
-    name: 'certificate:cleanup',
+    name: self::NAME,
     description: '清理过期和无效证书',
 )]
 class CertificateCleanupCommand extends Command

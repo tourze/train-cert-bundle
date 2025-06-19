@@ -18,7 +18,7 @@ use Tourze\TrainCertBundle\Service\CertificateVerificationService;
  * 生成证书相关的统计报告
  */
 #[AsCommand(
-    name: 'certificate:statistics',
+    name: self::NAME,
     description: '生成证书统计报告',
 )]
 class CertificateStatisticsCommand extends Command

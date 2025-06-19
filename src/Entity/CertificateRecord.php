@@ -44,11 +44,11 @@ class CertificateRecord implements ApiArrayInterface
     private string $certificateType;
 
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: false, options: ['comment' => '发证日期'])]
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: false, options: ['comment' => '发证日期'])]
     private \DateTimeInterface $issueDate;
 
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true, options: ['comment' => '到期日期'])]
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true, options: ['comment' => '到期日期'])]
     private ?\DateTimeInterface $expiryDate = null;
 
     #[Groups(['admin_curd', 'restful_read', 'restful_write'])]

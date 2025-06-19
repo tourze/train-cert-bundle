@@ -8,7 +8,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 
-#[AsCommand(name: 'job-training:generate-certificate-image', description: '生成证书图片')]
+#[AsCommand(name: self::NAME, description: '生成证书图片')]
 class GenerateCertificateImageCommand extends Command
 {
     
