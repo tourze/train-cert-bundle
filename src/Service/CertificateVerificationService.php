@@ -8,7 +8,6 @@ use Tourze\TrainCertBundle\Entity\Certificate;
 use Tourze\TrainCertBundle\Entity\CertificateRecord;
 use Tourze\TrainCertBundle\Entity\CertificateVerification;
 use Tourze\TrainCertBundle\Repository\CertificateRecordRepository;
-use Tourze\TrainCertBundle\Repository\CertificateRepository;
 use Tourze\TrainCertBundle\Repository\CertificateVerificationRepository;
 
 /**
@@ -19,7 +18,6 @@ class CertificateVerificationService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly CertificateRepository $certificateRepository,
         private readonly CertificateRecordRepository $recordRepository,
         private readonly CertificateVerificationRepository $verificationRepository,
         private readonly RequestStack $requestStack
@@ -28,7 +26,7 @@ class CertificateVerificationService
 
     /**
      * 验证证书
-     * 
+     *
      * @param string $certificateNumber 证书编号
      * @return array 验证结果
      */
@@ -36,7 +34,7 @@ class CertificateVerificationService
     {
         $record = $this->recordRepository->findOneBy(['certificateNumber' => $certificateNumber]);
         
-        if (!$record) {
+        if ($record === null) {
             $result = [
                 'valid' => false,
                 'message' => '证书不存在',
@@ -54,7 +52,7 @@ class CertificateVerificationService
 
     /**
      * 通过验证码验证证书
-     * 
+     *
      * @param string $verificationCode 验证码
      * @return array 验证结果
      */
@@ -62,7 +60,7 @@ class CertificateVerificationService
     {
         $record = $this->recordRepository->findOneBy(['verificationCode' => $verificationCode]);
         
-        if (!$record) {
+        if ($record === null) {
             $result = [
                 'valid' => false,
                 'message' => '验证码无效',
@@ -80,7 +78,7 @@ class CertificateVerificationService
 
     /**
      * 记录验证过程
-     * 
+     *
      * @param Certificate|null $certificate 证书对象
      * @param string $verificationMethod 验证方式
      * @param array $verificationData 验证数据
@@ -114,7 +112,7 @@ class CertificateVerificationService
 
     /**
      * 批量验证证书
-     * 
+     *
      * @param array $certificateNumbers 证书编号列表
      * @return array 验证结果列表
      */
@@ -131,7 +129,7 @@ class CertificateVerificationService
 
     /**
      * 获取证书详细信息
-     * 
+     *
      * @param string $certificateNumber 证书编号
      * @return array|null 证书信息
      */
@@ -139,7 +137,7 @@ class CertificateVerificationService
     {
         $record = $this->recordRepository->findOneBy(['certificateNumber' => $certificateNumber]);
         
-        if (!$record) {
+        if ($record === null) {
             return null;
         }
 
@@ -163,7 +161,7 @@ class CertificateVerificationService
 
     /**
      * 获取验证历史
-     * 
+     *
      * @param string $certificateId 证书ID
      * @return CertificateVerification[] 验证历史
      */
@@ -174,7 +172,7 @@ class CertificateVerificationService
 
     /**
      * 获取验证统计
-     * 
+     *
      * @param \DateTimeInterface|null $startDate 开始日期
      * @param \DateTimeInterface|null $endDate 结束日期
      * @return array 统计数据
@@ -211,7 +209,7 @@ class CertificateVerificationService
 
     /**
      * 检查证书是否被频繁验证
-     * 
+     *
      * @param string $certificateId 证书ID
      * @param int $timeWindow 时间窗口（秒）
      * @param int $threshold 阈值
@@ -237,7 +235,7 @@ class CertificateVerificationService
 
     /**
      * 验证证书记录
-     * 
+     *
      * @param CertificateRecord $record 证书记录
      * @return array 验证结果
      */
@@ -280,7 +278,7 @@ class CertificateVerificationService
 
     /**
      * 提取验证者信息
-     * 
+     *
      * @param \Symfony\Component\HttpFoundation\Request $request 请求对象
      * @return string 验证者信息
      */
@@ -288,11 +286,11 @@ class CertificateVerificationService
     {
         $info = [];
         
-        if ($referer = $request->headers->get('Referer')) {
+        if (($referer = $request->headers->get('Referer')) !== null) {
             $info[] = "来源: {$referer}";
         }
         
-        if ($acceptLanguage = $request->headers->get('Accept-Language')) {
+        if (($acceptLanguage = $request->headers->get('Accept-Language')) !== null) {
             $info[] = "语言: {$acceptLanguage}";
         }
 

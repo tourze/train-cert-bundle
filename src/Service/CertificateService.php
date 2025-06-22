@@ -3,7 +3,6 @@
 namespace Tourze\TrainCertBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\TrainCertBundle\Entity\Certificate;
 use Tourze\TrainCertBundle\Entity\CertificateApplication;
@@ -20,7 +19,6 @@ class CertificateService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly LoggerInterface $logger,
         private readonly CertificateRepository $certificateRepository,
         private readonly CertificateApplicationRepository $applicationRepository,
         private readonly CertificateTemplateRepository $templateRepository,
@@ -30,7 +28,7 @@ class CertificateService
 
     /**
      * 生成证书
-     * 
+     *
      * @param string $userId 用户ID
      * @param string $courseId 课程ID（暂时保留，未来可能需要）
      * @param string $templateId 模板ID
@@ -39,7 +37,7 @@ class CertificateService
     public function generateCertificate(string $userId, string $courseId, string $templateId): Certificate
     {
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
@@ -59,7 +57,7 @@ class CertificateService
 
     /**
      * 申请证书
-     * 
+     *
      * @param string $userId 申请用户ID
      * @param string $courseId 课程ID（暂时保留）
      * @param array $applicationData 申请数据
@@ -71,25 +69,24 @@ class CertificateService
         $this->validateApplicationData($applicationData);
 
         // 获取用户对象（这里需要用户服务，暂时简化处理）
-        $user = $this->getUserById($userId);
-        if (!$user) {
-            throw new \InvalidArgumentException('用户不存在');
-        }
-
+        // TODO: 实际实现中需要通过用户服务获取用户对象
+        // $user = $this->userService->getUser($userId);
+        
         // 获取证书模板
         $templateId = $applicationData['templateId'] ?? null;
-        if (!$templateId) {
+        if ($templateId === null || $templateId === '') {
             throw new \InvalidArgumentException('必须指定证书模板');
         }
 
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
         // 创建申请记录
         $application = new CertificateApplication();
-        $application->setUser($user);
+        // TODO: 实际实现中需要设置用户
+        // $application->setUser($user);
         $application->setTemplate($template);
         $application->setApplicationType($applicationData['type'] ?? 'standard');
         $application->setApplicationStatus('pending');
@@ -105,7 +102,7 @@ class CertificateService
 
     /**
      * 审核证书申请
-     * 
+     *
      * @param string $applicationId 申请ID
      * @param string $auditResult 审核结果
      * @param string $comment 审核意见
@@ -114,7 +111,7 @@ class CertificateService
     public function auditCertificate(string $applicationId, string $auditResult, string $comment): CertificateAudit
     {
         $application = $this->applicationRepository->find($applicationId);
-        if (!$application) {
+        if ($application === null) {
             throw new \InvalidArgumentException('证书申请不存在');
         }
 
@@ -150,14 +147,14 @@ class CertificateService
 
     /**
      * 发放证书
-     * 
+     *
      * @param string $applicationId 申请ID
      * @return Certificate 发放的证书
      */
     public function issueCertificate(string $applicationId): Certificate
     {
         $application = $this->applicationRepository->find($applicationId);
-        if (!$application) {
+        if ($application === null) {
             throw new \InvalidArgumentException('证书申请不存在');
         }
 
@@ -193,7 +190,7 @@ class CertificateService
 
     /**
      * 验证申请数据
-     * 
+     *
      * @param array $applicationData 申请数据
      * @throws \InvalidArgumentException
      */
@@ -213,23 +210,10 @@ class CertificateService
         }
     }
 
-    /**
-     * 根据用户ID获取用户对象
-     * 注意：这里需要用户服务的支持，暂时返回null，实际使用时需要注入用户服务
-     * 
-     * @param string $userId 用户ID
-     * @return UserInterface|null
-     */
-    private function getUserById(string $userId): ?UserInterface
-    {
-        // TODO: 实际实现中需要注入用户服务来获取用户对象
-        // 这里暂时返回null，需要在实际使用时完善
-        return null;
-    }
 
     /**
      * 获取用户的证书列表
-     * 
+     *
      * @param UserInterface $user 用户对象
      * @return Certificate[] 证书列表
      */
@@ -240,7 +224,7 @@ class CertificateService
 
     /**
      * 获取用户的申请列表
-     * 
+     *
      * @param UserInterface $user 用户对象
      * @return CertificateApplication[] 申请列表
      */
@@ -251,7 +235,7 @@ class CertificateService
 
     /**
      * 检查证书是否有效
-     * 
+     *
      * @param Certificate $certificate 证书对象
      * @return bool 是否有效
      */

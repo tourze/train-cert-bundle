@@ -24,7 +24,7 @@ class CertificateNotificationService
 
     /**
      * 发送证书发放通知
-     * 
+     *
      * @param string $certificateId 证书ID
      * @return void
      */
@@ -32,7 +32,7 @@ class CertificateNotificationService
     {
         try {
             $record = $this->recordRepository->findOneBy(['certificate' => $certificateId]);
-            if (!$record) {
+            if ($record === null) {
                 $this->logger->warning('证书记录不存在，无法发送发放通知', ['certificateId' => $certificateId]);
                 return;
             }
@@ -62,7 +62,7 @@ class CertificateNotificationService
 
     /**
      * 发送证书验证通知
-     * 
+     *
      * @param string $certificateId 证书ID
      * @param array $verificationData 验证数据
      * @return void
@@ -71,7 +71,7 @@ class CertificateNotificationService
     {
         try {
             $record = $this->recordRepository->findOneBy(['certificate' => $certificateId]);
-            if (!$record) {
+            if ($record === null) {
                 $this->logger->warning('证书记录不存在，无法发送验证通知', ['certificateId' => $certificateId]);
                 return;
             }
@@ -102,7 +102,7 @@ class CertificateNotificationService
 
     /**
      * 发送证书过期提醒
-     * 
+     *
      * @param int $days 提前天数
      * @return void
      */
@@ -129,7 +129,7 @@ class CertificateNotificationService
 
     /**
      * 发送单个证书过期提醒
-     * 
+     *
      * @param CertificateRecord $record 证书记录
      * @return void
      */
@@ -163,7 +163,7 @@ class CertificateNotificationService
 
     /**
      * 发送证书撤销通知
-     * 
+     *
      * @param string $certificateId 证书ID
      * @param string $reason 撤销原因
      * @return void
@@ -172,7 +172,7 @@ class CertificateNotificationService
     {
         try {
             $record = $this->recordRepository->findOneBy(['certificate' => $certificateId]);
-            if (!$record) {
+            if ($record === null) {
                 $this->logger->warning('证书记录不存在，无法发送撤销通知', ['certificateId' => $certificateId]);
                 return;
             }
@@ -203,7 +203,7 @@ class CertificateNotificationService
 
     /**
      * 发送邮件
-     * 
+     *
      * @param string $recipient 收件人
      * @param string $subject 主题
      * @param string $content 内容
@@ -222,7 +222,7 @@ class CertificateNotificationService
 
     /**
      * 构建证书发放通知内容
-     * 
+     *
      * @param Certificate $certificate 证书对象
      * @param CertificateRecord $record 证书记录
      * @return string 邮件内容
@@ -254,7 +254,7 @@ class CertificateNotificationService
 
     /**
      * 构建证书验证通知内容
-     * 
+     *
      * @param Certificate $certificate 证书对象
      * @param CertificateRecord $record 证书记录
      * @param array $verificationData 验证数据
@@ -287,7 +287,7 @@ class CertificateNotificationService
 
     /**
      * 构建证书过期提醒内容
-     * 
+     *
      * @param Certificate $certificate 证书对象
      * @param CertificateRecord $record 证书记录
      * @return string 邮件内容
@@ -314,7 +314,7 @@ class CertificateNotificationService
 
     /**
      * 构建证书撤销通知内容
-     * 
+     *
      * @param Certificate $certificate 证书对象
      * @param CertificateRecord $record 证书记录
      * @param string $reason 撤销原因

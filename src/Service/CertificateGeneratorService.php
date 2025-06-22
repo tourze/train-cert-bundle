@@ -3,11 +3,9 @@
 namespace Tourze\TrainCertBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\TrainCertBundle\Entity\Certificate;
 use Tourze\TrainCertBundle\Entity\CertificateRecord;
 use Tourze\TrainCertBundle\Entity\CertificateTemplate;
-use Tourze\TrainCertBundle\Repository\CertificateRepository;
 use Tourze\TrainCertBundle\Repository\CertificateTemplateRepository;
 
 /**
@@ -18,14 +16,13 @@ class CertificateGeneratorService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly CertificateRepository $certificateRepository,
         private readonly CertificateTemplateRepository $templateRepository
     ) {
     }
 
     /**
      * 生成单个证书
-     * 
+     *
      * @param string $userId 用户ID
      * @param string $templateId 模板ID
      * @param array $data 证书数据
@@ -34,7 +31,7 @@ class CertificateGeneratorService
     public function generateSingleCertificate(string $userId, string $templateId, array $data): Certificate
     {
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
@@ -43,14 +40,13 @@ class CertificateGeneratorService
         }
 
         // 获取用户对象（暂时简化处理）
-        $user = $this->getUserById($userId);
-        if (!$user) {
-            throw new \InvalidArgumentException('用户不存在');
-        }
-
+        // TODO: 实际实现中需要通过用户服务获取用户对象
+        // $user = $this->userService->getUser($userId);
+        // 现在暂时跳过用户关联
+        
         // 创建证书
         $certificate = new Certificate();
-        $certificate->setUser($user);
+        // $certificate->setUser($user);
         $certificate->setTitle($template->getTemplateName());
         $certificate->setValid(true);
 
@@ -78,7 +74,7 @@ class CertificateGeneratorService
 
     /**
      * 批量生成证书
-     * 
+     *
      * @param array $userIds 用户ID列表
      * @param string $templateId 模板ID
      * @param array $config 配置参数
@@ -103,7 +99,7 @@ class CertificateGeneratorService
 
     /**
      * 生成验证码
-     * 
+     *
      * @param string $certificateId 证书ID
      * @return string 验证码
      */
@@ -119,7 +115,7 @@ class CertificateGeneratorService
 
     /**
      * 生成证书编号
-     * 
+     *
      * @return string 证书编号
      */
     private function generateCertificateNumber(): string
@@ -129,14 +125,14 @@ class CertificateGeneratorService
         $day = date('d');
         
         // 生成格式：CERT-YYYYMMDD-XXXXXX
-        $sequence = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        $sequence = str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
         
         return "CERT-{$year}{$month}{$day}-{$sequence}";
     }
 
     /**
      * 生成证书文件
-     * 
+     *
      * @param CertificateTemplate $template 证书模板
      * @param array $data 证书数据
      * @return string 证书文件URL
@@ -153,7 +149,7 @@ class CertificateGeneratorService
 
     /**
      * 计算证书到期日期
-     * 
+     *
      * @param CertificateTemplate $template 证书模板
      * @return \DateTimeInterface 到期日期
      */
@@ -168,23 +164,10 @@ class CertificateGeneratorService
         return $expiryDate;
     }
 
-    /**
-     * 根据用户ID获取用户对象
-     * 注意：这里需要用户服务的支持，暂时返回null，实际使用时需要注入用户服务
-     * 
-     * @param string $userId 用户ID
-     * @return UserInterface|null
-     */
-    private function getUserById(string $userId): ?UserInterface
-    {
-        // TODO: 实际实现中需要注入用户服务来获取用户对象
-        // 这里暂时返回null，需要在实际使用时完善
-        return null;
-    }
 
     /**
      * 预览证书
-     * 
+     *
      * @param string $templateId 模板ID
      * @param array $sampleData 示例数据
      * @return string 预览URL
@@ -192,7 +175,7 @@ class CertificateGeneratorService
     public function previewCertificate(string $templateId, array $sampleData): string
     {
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
@@ -202,7 +185,7 @@ class CertificateGeneratorService
 
     /**
      * 验证证书数据
-     * 
+     *
      * @param array $data 证书数据
      * @return bool 是否有效
      */

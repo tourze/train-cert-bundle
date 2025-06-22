@@ -10,7 +10,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tourze\TrainCertBundle\Repository\CertificateRecordRepository;
-use Tourze\TrainCertBundle\Repository\CertificateRepository;
 use Tourze\TrainCertBundle\Service\CertificateVerificationService;
 
 /**
@@ -26,7 +25,6 @@ class CertificateStatisticsCommand extends Command
     
     public const NAME = 'certificate:statistics';
 public function __construct(
-        private readonly CertificateRepository $certificateRepository,
         private readonly CertificateRecordRepository $recordRepository,
         private readonly CertificateVerificationService $verificationService,
         private readonly LoggerInterface $logger
@@ -114,7 +112,7 @@ public function __construct(
      */
     private function parseDate(?string $dateString): ?\DateTimeInterface
     {
-        if (!$dateString) {
+        if ($dateString === null || $dateString === '') {
             return null;
         }
 

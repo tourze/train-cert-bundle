@@ -181,7 +181,7 @@ class CertificateRecord implements ApiArrayInterface
         $now = new \DateTime();
         $diff = $now->diff($this->expiryDate);
 
-        return $diff->invert ? -$diff->days : $diff->days;
+        return $diff->invert === 1 ? -$diff->days : $diff->days;
     }
 
     public function retrieveApiArray(): array

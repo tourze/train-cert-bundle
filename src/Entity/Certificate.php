@@ -48,7 +48,7 @@ class Certificate implements ApiArrayInterface, Stringable
     private ?bool $valid = false;
 
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
         return $this->id;
     }

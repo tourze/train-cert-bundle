@@ -40,7 +40,7 @@ class CheckJobTrainingCertificate extends LockableProcedure
             'id' => $this->number,
             'user' => $this->security->getUser(),
         ]);
-        if (!$cert) {
+        if ($cert === null) {
             throw new ApiException('找不到证书信息');
         }
 

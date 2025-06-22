@@ -10,8 +10,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Tourze\TrainCertBundle\Repository\CertificateRecordRepository;
-use Tourze\TrainCertBundle\Repository\CertificateVerificationRepository;
 
 /**
  * 证书清理命令
@@ -27,8 +25,6 @@ class CertificateCleanupCommand extends Command
     public const NAME = 'certificate:cleanup';
 public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly CertificateRecordRepository $recordRepository,
-        private readonly CertificateVerificationRepository $verificationRepository,
         private readonly LoggerInterface $logger
     ) {
         parent::__construct();
@@ -335,7 +331,7 @@ public function __construct(
             ]
         );
 
-        $totalDeleted = $results['expiredRecordsDeleted'] + $results['verificationsDeleted'];
+        $totalDeleted = (int) $results['expiredRecordsDeleted'] + (int) $results['verificationsDeleted'];
         
         if ($totalDeleted > 0) {
             $io->success(sprintf('清理完成，共删除 %d 条记录', $totalDeleted));

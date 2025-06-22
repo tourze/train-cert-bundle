@@ -20,7 +20,7 @@ class CertificateTemplateService
 
     /**
      * 创建证书模板
-     * 
+     *
      * @param array $templateData 模板数据
      * @return CertificateTemplate 创建的模板
      */
@@ -50,7 +50,7 @@ class CertificateTemplateService
 
     /**
      * 更新证书模板
-     * 
+     *
      * @param string $templateId 模板ID
      * @param array $templateData 模板数据
      * @return CertificateTemplate 更新的模板
@@ -58,7 +58,7 @@ class CertificateTemplateService
     public function updateTemplate(string $templateId, array $templateData): CertificateTemplate
     {
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
@@ -98,7 +98,7 @@ class CertificateTemplateService
 
     /**
      * 渲染证书
-     * 
+     *
      * @param string $templateId 模板ID
      * @param array $data 证书数据
      * @return string 渲染结果
@@ -106,7 +106,7 @@ class CertificateTemplateService
     public function renderCertificate(string $templateId, array $data): string
     {
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
@@ -120,7 +120,7 @@ class CertificateTemplateService
 
     /**
      * 预览模板
-     * 
+     *
      * @param string $templateId 模板ID
      * @param array $sampleData 示例数据
      * @return string 预览结果
@@ -128,7 +128,7 @@ class CertificateTemplateService
     public function previewTemplate(string $templateId, array $sampleData): string
     {
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
@@ -141,14 +141,14 @@ class CertificateTemplateService
 
     /**
      * 验证模板
-     * 
+     *
      * @param string $templateId 模板ID
      * @return array 验证结果
      */
     public function validateTemplate(string $templateId): array
     {
         $template = $this->templateRepository->find($templateId);
-        if (!$template) {
+        if ($template === null) {
             throw new \InvalidArgumentException('证书模板不存在');
         }
 
@@ -183,14 +183,14 @@ class CertificateTemplateService
 
     /**
      * 复制模板
-     * 
+     *
      * @param string $templateId 源模板ID
      * @return CertificateTemplate 复制的模板
      */
     public function duplicateTemplate(string $templateId): CertificateTemplate
     {
         $sourceTemplate = $this->templateRepository->find($templateId);
-        if (!$sourceTemplate) {
+        if ($sourceTemplate === null) {
             throw new \InvalidArgumentException('源证书模板不存在');
         }
 
@@ -211,7 +211,7 @@ class CertificateTemplateService
 
     /**
      * 获取可用的模板列表
-     * 
+     *
      * @param string|null $type 模板类型
      * @return CertificateTemplate[] 模板列表
      */
@@ -226,7 +226,7 @@ class CertificateTemplateService
 
     /**
      * 获取默认模板
-     * 
+     *
      * @param string|null $type 模板类型
      * @return CertificateTemplate|null 默认模板
      */
@@ -241,7 +241,7 @@ class CertificateTemplateService
 
     /**
      * 验证模板数据
-     * 
+     *
      * @param array $templateData 模板数据
      * @throws \InvalidArgumentException
      */
@@ -263,7 +263,7 @@ class CertificateTemplateService
 
     /**
      * 清除默认模板设置
-     * 
+     *
      * @param string $templateType 模板类型
      * @param string|null $excludeId 排除的模板ID
      */
@@ -288,7 +288,7 @@ class CertificateTemplateService
 
     /**
      * 处理模板渲染
-     * 
+     *
      * @param CertificateTemplate $template 模板对象
      * @param array $data 数据
      * @return string 渲染结果
@@ -307,7 +307,7 @@ class CertificateTemplateService
 
     /**
      * 获取默认示例数据
-     * 
+     *
      * @return array 示例数据
      */
     private function getDefaultSampleData(): array
