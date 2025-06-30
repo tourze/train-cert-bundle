@@ -7,6 +7,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\TrainCertBundle\Entity\Certificate;
 use Tourze\TrainCertBundle\Entity\CertificateApplication;
 use Tourze\TrainCertBundle\Entity\CertificateAudit;
+use Tourze\TrainCertBundle\Exception\InvalidArgumentException;
 use Tourze\TrainCertBundle\Repository\CertificateApplicationRepository;
 use Tourze\TrainCertBundle\Repository\CertificateRepository;
 use Tourze\TrainCertBundle\Repository\CertificateTemplateRepository;
@@ -38,11 +39,11 @@ class CertificateService
     {
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         if (!$template->isActive()) {
-            throw new \InvalidArgumentException('证书模板未启用');
+            throw new InvalidArgumentException('证书模板未启用');
         }
 
         // 使用生成器服务生成证书
@@ -75,12 +76,12 @@ class CertificateService
         // 获取证书模板
         $templateId = $applicationData['templateId'] ?? null;
         if ($templateId === null || $templateId === '') {
-            throw new \InvalidArgumentException('必须指定证书模板');
+            throw new InvalidArgumentException('必须指定证书模板');
         }
 
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         // 创建申请记录
@@ -112,11 +113,11 @@ class CertificateService
     {
         $application = $this->applicationRepository->find($applicationId);
         if ($application === null) {
-            throw new \InvalidArgumentException('证书申请不存在');
+            throw new InvalidArgumentException('证书申请不存在');
         }
 
         if ($application->getApplicationStatus() !== 'pending') {
-            throw new \InvalidArgumentException('申请状态不允许审核');
+            throw new InvalidArgumentException('申请状态不允许审核');
         }
 
         // 创建审核记录
@@ -155,11 +156,11 @@ class CertificateService
     {
         $application = $this->applicationRepository->find($applicationId);
         if ($application === null) {
-            throw new \InvalidArgumentException('证书申请不存在');
+            throw new InvalidArgumentException('证书申请不存在');
         }
 
         if ($application->getApplicationStatus() !== 'approved') {
-            throw new \InvalidArgumentException('申请未通过审核，无法发放证书');
+            throw new InvalidArgumentException('申请未通过审核，无法发放证书');
         }
 
         // 检查是否已经发放过证书
@@ -169,7 +170,7 @@ class CertificateService
         ]);
 
         if ((bool) $existingCertificate) {
-            throw new \InvalidArgumentException('该用户已拥有此类型证书');
+            throw new InvalidArgumentException('该用户已拥有此类型证书');
         }
 
         // 生成证书
@@ -200,13 +201,13 @@ class CertificateService
         
         foreach ($requiredFields as $field) {
             if (!isset($applicationData[$field]) || empty($applicationData[$field])) {
-                throw new \InvalidArgumentException("缺少必需字段: {$field}");
+                throw new InvalidArgumentException("缺少必需字段: {$field}");
             }
         }
 
         $validTypes = ['standard', 'renewal', 'upgrade'];
         if (!in_array($applicationData['type'], $validTypes)) {
-            throw new \InvalidArgumentException('无效的申请类型');
+            throw new InvalidArgumentException('无效的申请类型');
         }
     }
 

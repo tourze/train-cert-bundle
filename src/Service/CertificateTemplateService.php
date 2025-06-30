@@ -4,6 +4,7 @@ namespace Tourze\TrainCertBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Tourze\TrainCertBundle\Entity\CertificateTemplate;
+use Tourze\TrainCertBundle\Exception\InvalidArgumentException;
 use Tourze\TrainCertBundle\Repository\CertificateTemplateRepository;
 
 /**
@@ -59,7 +60,7 @@ class CertificateTemplateService
     {
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         $this->validateTemplateData($templateData);
@@ -107,11 +108,11 @@ class CertificateTemplateService
     {
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         if (!$template->isActive()) {
-            throw new \InvalidArgumentException('证书模板未启用');
+            throw new InvalidArgumentException('证书模板未启用');
         }
 
         // 根据模板配置渲染证书
@@ -129,7 +130,7 @@ class CertificateTemplateService
     {
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         // 使用示例数据渲染模板
@@ -149,7 +150,7 @@ class CertificateTemplateService
     {
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         $errors = [];
@@ -191,7 +192,7 @@ class CertificateTemplateService
     {
         $sourceTemplate = $this->templateRepository->find($templateId);
         if ($sourceTemplate === null) {
-            throw new \InvalidArgumentException('源证书模板不存在');
+            throw new InvalidArgumentException('源证书模板不存在');
         }
 
         $newTemplate = new CertificateTemplate();
@@ -251,13 +252,13 @@ class CertificateTemplateService
         
         foreach ($requiredFields as $field) {
             if (!isset($templateData[$field]) || empty($templateData[$field])) {
-                throw new \InvalidArgumentException("缺少必需字段: {$field}");
+                throw new InvalidArgumentException("缺少必需字段: {$field}");
             }
         }
 
         $validTypes = ['safety', 'skill', 'management', 'special'];
         if (!in_array($templateData['templateType'], $validTypes)) {
-            throw new \InvalidArgumentException('无效的模板类型');
+            throw new InvalidArgumentException('无效的模板类型');
         }
     }
 

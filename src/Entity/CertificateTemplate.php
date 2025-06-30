@@ -6,7 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\ApiArrayInterface;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
@@ -21,13 +21,7 @@ class CertificateTemplate implements ApiArrayInterface
 {
     use TimestampableAware;
     use BlameableAware;
-
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
-    private ?string $id = null;
+    use SnowflakeKeyAware;
 
     public function __construct()
     {
@@ -37,44 +31,41 @@ class CertificateTemplate implements ApiArrayInterface
     }
 
     #[TrackColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '是否启用', 'default' => 1])]
     private ?bool $isActive = true;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: false, options: ['comment' => '模板名称'])]
     private string $templateName;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '证书类型'])]
     private string $templateType;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '模板文件路径'])]
     private ?string $templatePath = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '模板配置'])]
     private ?array $templateConfig = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '字段映射配置'])]
     private ?array $fieldMapping = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '是否默认模板', 'default' => 0])]
     private ?bool $isDefault = false;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '模板描述'])]
     private ?string $description = null;
 
     public function __toString(): string
     {
         return $this->templateName ?? '';
-    }public function getId(): ?string
-    {
-        return $this->id;
     }
 
     public function isActive(): ?bool

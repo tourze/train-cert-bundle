@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tourze\TrainCertBundle\Exception\InvalidArgumentException;
 use Tourze\TrainCertBundle\Repository\CertificateRecordRepository;
 use Tourze\TrainCertBundle\Service\CertificateVerificationService;
 
@@ -118,7 +119,7 @@ public function __construct(
 
         $date = \DateTime::createFromFormat('Y-m-d', $dateString);
         if (!$date) {
-            throw new \InvalidArgumentException("无效的日期格式: {$dateString}，请使用 Y-m-d 格式");
+            throw new InvalidArgumentException("无效的日期格式: {$dateString}，请使用 Y-m-d 格式");
         }
 
         return $date;

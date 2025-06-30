@@ -34,7 +34,7 @@ public function __construct(
     {
         $this
             ->addOption('expired-days', 'd', InputOption::VALUE_OPTIONAL, '清理过期多少天的证书', 365)
-            ->addOption('verification-days', 'v', InputOption::VALUE_OPTIONAL, '清理多少天前的验证记录', 90)
+            ->addOption('verification-days', null, InputOption::VALUE_OPTIONAL, '清理多少天前的验证记录', 90)
             ->addOption('dry-run', null, InputOption::VALUE_NONE, '试运行模式，不实际删除数据')
             ->addOption('batch-size', 'b', InputOption::VALUE_OPTIONAL, '批处理大小', 100)
             ->addOption('force', 'f', InputOption::VALUE_NONE, '强制执行，跳过确认')

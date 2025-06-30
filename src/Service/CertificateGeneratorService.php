@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Tourze\TrainCertBundle\Entity\Certificate;
 use Tourze\TrainCertBundle\Entity\CertificateRecord;
 use Tourze\TrainCertBundle\Entity\CertificateTemplate;
+use Tourze\TrainCertBundle\Exception\InvalidArgumentException;
 use Tourze\TrainCertBundle\Repository\CertificateTemplateRepository;
 
 /**
@@ -32,11 +33,11 @@ class CertificateGeneratorService
     {
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         if (!$template->isActive()) {
-            throw new \InvalidArgumentException('证书模板未启用');
+            throw new InvalidArgumentException('证书模板未启用');
         }
 
         // 获取用户对象（暂时简化处理）
@@ -176,7 +177,7 @@ class CertificateGeneratorService
     {
         $template = $this->templateRepository->find($templateId);
         if ($template === null) {
-            throw new \InvalidArgumentException('证书模板不存在');
+            throw new InvalidArgumentException('证书模板不存在');
         }
 
         // 生成预览文件

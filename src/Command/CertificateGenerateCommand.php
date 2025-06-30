@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tourze\TrainCertBundle\Exception\InvalidArgumentException;
 use Tourze\TrainCertBundle\Service\CertificateGeneratorService;
 use Tourze\TrainCertBundle\Service\CertificateTemplateService;
 
@@ -112,7 +113,7 @@ public function __construct(
         $userFile = $input->getOption('user-file');
         if (!empty($userFile)) {
             if (!file_exists($userFile)) {
-                throw new \InvalidArgumentException("用户文件不存在: {$userFile}");
+                throw new InvalidArgumentException("用户文件不存在: {$userFile}");
             }
 
             $fileUserIds = array_filter(

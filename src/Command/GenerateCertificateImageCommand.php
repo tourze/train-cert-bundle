@@ -7,6 +7,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Tourze\TrainCertBundle\Exception\CertificateException;
 
 #[AsCommand(name: self::NAME, description: '生成证书图片')]
 class GenerateCertificateImageCommand extends Command
@@ -32,7 +33,7 @@ public function __construct(
             $binFile = $projectRoot . '/vendor/h4cc/wkhtmltoimage-amd64/bin/wkhtmltoimage-amd64';
             @system("chmod +x {$binFile}");
         } else {
-            throw new \RuntimeException('未知操作系统');
+            throw new CertificateException('未知操作系统');
         }
 
         $outputFile = __DIR__ . '/output.png';

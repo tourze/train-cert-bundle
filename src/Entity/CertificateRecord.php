@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
@@ -21,53 +21,43 @@ class CertificateRecord implements ApiArrayInterface
 {
     use TimestampableAware;
     use BlameableAware;
+    use SnowflakeKeyAware;
 
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
-    private ?string $id = null;
-
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\OneToOne(targetEntity: Certificate::class)]
     #[ORM\JoinColumn(nullable: false)]
     private Certificate $certificate;
 
     #[IndexColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: false, unique: true, options: ['comment' => '证书编号'])]
     private string $certificateNumber;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '证书类型'])]
     private string $certificateType;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: false, options: ['comment' => '发证日期'])]
     private \DateTimeInterface $issueDate;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true, options: ['comment' => '到期日期'])]
     private ?\DateTimeInterface $expiryDate = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 200, nullable: false, options: ['comment' => '发证机构'])]
     private string $issuingAuthority;
 
     #[IndexColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: false, unique: true, options: ['comment' => '验证码'])]
     private string $verificationCode;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '元数据'])]
     private ?array $metadata = null;
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getCertificate(): Certificate
     {

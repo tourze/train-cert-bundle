@@ -8,7 +8,7 @@ use Tourze\TrainCertBundle\Entity\CertificateRecord;
 
 /**
  * 证书记录Repository
- * 
+ *
  * @method CertificateRecord|null find($id, $lockMode = null, $lockVersion = null)
  * @method CertificateRecord|null findOneBy(array $criteria, array $orderBy = null)
  * @method CertificateRecord[]    findAll()

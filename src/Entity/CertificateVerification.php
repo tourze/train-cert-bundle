@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\TrainCertBundle\Repository\CertificateVerificationRepository;
@@ -22,45 +22,39 @@ class CertificateVerification implements ApiArrayInterface, \Stringable
 {
     use TimestampableAware;
     use BlameableAware;
+    use SnowflakeKeyAware;
 
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
-    private ?string $id = null;
-
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\ManyToOne(targetEntity: Certificate::class)]
     #[ORM\JoinColumn(nullable: false)]
     private Certificate $certificate;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '验证方式'])]
     private string $verificationMethod;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 200, nullable: true, options: ['comment' => '验证者信息'])]
     private ?string $verifierInfo = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: false, options: ['comment' => '验证结果', 'default' => 0])]
     private bool $verificationResult = false;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '验证详情'])]
     private ?array $verificationDetails = null;
 
     #[IndexColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 45, nullable: true, options: ['comment' => '验证IP地址'])]
     private ?string $ipAddress = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '用户代理'])]
     private ?string $userAgent = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: false, options: ['comment' => '验证时间'])]
     private \DateTimeInterface $verificationTime;
 
@@ -71,17 +65,9 @@ class CertificateVerification implements ApiArrayInterface, \Stringable
 
     public function __toString(): string
     {
-        return sprintf(
-            '证书验证 #%s - %s',
-            $this->id ?? 'NEW',
-            $this->verificationMethod ?? '未知方式'
-        );
+        return $this->verificationMethod ?? '';
     }
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getCertificate(): Certificate
     {

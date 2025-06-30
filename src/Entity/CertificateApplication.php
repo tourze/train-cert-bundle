@@ -8,7 +8,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
@@ -22,61 +22,51 @@ class CertificateApplication implements ApiArrayInterface
 {
     use TimestampableAware;
     use BlameableAware;
+    use SnowflakeKeyAware;
 
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
-    private ?string $id = null;
-
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\ManyToOne(targetEntity: UserInterface::class)]
     #[ORM\JoinColumn(nullable: false)]
     private UserInterface $user;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\ManyToOne(targetEntity: CertificateTemplate::class)]
     #[ORM\JoinColumn(nullable: false)]
     private CertificateTemplate $template;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '申请类型'])]
     private string $applicationType;
 
     #[IndexColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '申请状态', 'default' => 'pending'])]
     private string $applicationStatus = 'pending';
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '申请数据'])]
     private ?array $applicationData = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '必需文档'])]
     private ?array $requiredDocuments = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '审核意见'])]
     private ?string $reviewComment = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(length: 100, nullable: true, options: ['comment' => '审核人'])]
     private ?string $reviewer = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '申请时间'])]
     private ?\DateTimeInterface $applicationTime = null;
 
-    #[Groups(['admin_curd', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '审核时间'])]
     private ?\DateTimeInterface $reviewTime = null;
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getUser(): UserInterface
     {

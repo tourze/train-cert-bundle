@@ -13,19 +13,19 @@ use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 use Tourze\JsonRPCLogBundle\Attribute\Log;
 use Tourze\TrainCertBundle\Repository\CertificateRepository;
 
-#[MethodDoc('查询证件信息')]
-#[MethodExpose('CheckJobTrainingCertificate')]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[MethodDoc(summary: '查询证件信息')]
+#[MethodExpose(method: 'CheckJobTrainingCertificate')]
+#[IsGranted(attribute: 'IS_AUTHENTICATED_FULLY')]
 #[Log]
 class CheckJobTrainingCertificate extends LockableProcedure
 {
-    #[MethodParam('身份证号码')]
+    #[MethodParam(description: '身份证号码')]
     public string $idcard;
 
-    #[MethodParam('姓名')]
+    #[MethodParam(description: '姓名')]
     public string $name;
 
-    #[MethodParam('证书编号')]
+    #[MethodParam(description: '证书编号')]
     public string $number;
 
     public function __construct(
