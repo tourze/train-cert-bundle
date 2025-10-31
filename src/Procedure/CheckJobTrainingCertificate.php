@@ -7,12 +7,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
 use Tourze\JsonRPC\Core\Attribute\MethodParam;
+use Tourze\JsonRPC\Core\Attribute\MethodTag;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcParams;
 use Tourze\JsonRPCLockBundle\Procedure\LockableProcedure;
 use Tourze\JsonRPCLogBundle\Attribute\Log;
 use Tourze\TrainCertBundle\Repository\CertificateRepository;
 
+#[MethodTag(name: '培训证书管理')]
 #[MethodDoc(summary: '查询证件信息')]
 #[MethodExpose(method: 'CheckJobTrainingCertificate')]
 #[IsGranted(attribute: 'IS_AUTHENTICATED_FULLY')]
@@ -34,28 +36,37 @@ class CheckJobTrainingCertificate extends LockableProcedure
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function execute(): array
     {
         $cert = $this->certificateRepository->findOneBy([
             'id' => $this->number,
             'user' => $this->security->getUser(),
         ]);
-        if ($cert === null) {
+        if (null === $cert) {
             throw new ApiException('找不到证书信息');
         }
 
         return [
             'id' => $cert->getId(),
-            'createTime' => $cert->getCreateTime()->format('Y-m-d H:i:s'),
+            'createTime' => $cert->getCreateTime()?->format('Y-m-d H:i:s') ?? '',
             '__showToast' => "证书[{$this->number}]有效",
         ];
     }
 
+    /**
+     * @return array<string>|null
+     */
     public function getLockResource(JsonRpcParams $params): ?array
     {
+        $number = $params->get('number');
+        $numberString = is_string($number) ? $number : '';
+
         return [
-            $this->security->getUser()->getUserIdentifier(),
-            static::getProcedureName() . $params->get('number', ''),
+            $this->security->getUser()?->getUserIdentifier() ?? '',
+            static::getProcedureName() . $numberString,
         ];
     }
 }

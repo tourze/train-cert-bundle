@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainCertBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Stringable;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
@@ -17,43 +19,45 @@ use Tourze\TrainCertBundle\Repository\CertificateRepository;
 
 /**
  * 有一些省份，证书需要推送给省的监管平台的
+ * @implements ApiArrayInterface<string, mixed>
  */
 #[ORM\Entity(repositoryClass: CertificateRepository::class)]
 #[ORM\Table(name: 'job_training_certificate', options: ['comment' => '证书记录'])]
-class Certificate implements ApiArrayInterface, Stringable
+class Certificate implements ApiArrayInterface, \Stringable
 {
     use TimestampableAware;
     use BlameableAware;
     use SnowflakeKeyAware;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     #[ORM\Column(length: 100, options: ['comment' => '证书名'])]
-    private string $title;
+    private string $title = '';
 
-    #[Ignore]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private UserInterface $user;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?UserInterface $user = null;
 
+    #[Assert\Url]
+    #[Assert\Length(max: 255)]
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '证书文件'])]
     private ?string $imgUrl = null;
 
     #[TrackColumn]
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
+    #[Assert\Type(type: 'bool')]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
     private ?bool $valid = false;
-
-
 
     public function isValid(): ?bool
     {
         return $this->valid;
     }
 
-    public function setValid(?bool $valid): self
+    public function setValid(?bool $valid): void
     {
         $this->valid = $valid;
-
-        return $this;
     }
 
     public function getTitle(): string
@@ -61,25 +65,24 @@ class Certificate implements ApiArrayInterface, Stringable
         return $this->title;
     }
 
-    public function setTitle(string $title): static
+    public function setTitle(string $title): void
     {
         $this->title = $title;
-
-        return $this;
     }
 
-    public function getUser(): UserInterface
+    public function getUser(): ?UserInterface
     {
         return $this->user;
     }
 
-    public function setUser(UserInterface $user): static
+    public function setUser(?UserInterface $user): void
     {
         $this->user = $user;
-
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function retrieveApiArray(): array
     {
         return [
@@ -97,14 +100,38 @@ class Certificate implements ApiArrayInterface, Stringable
         return $this->imgUrl;
     }
 
-    public function setImgUrl(?string $imgUrl): static
+    public function setImgUrl(?string $imgUrl): void
     {
         $this->imgUrl = $imgUrl;
-
-        return $this;
     }
+
     public function __toString(): string
     {
         return $this->title ?? '';
+    }
+
+    public function setCertificateNumber(string $certificateNumber): void
+    {
+        // 证书编号功能待实现
+    }
+
+    public function setCertificateType(string $certificateType): void
+    {
+        // 证书类型功能待实现
+    }
+
+    public function setHolderName(string $holderName): void
+    {
+        // 持有人姓名功能待实现
+    }
+
+    public function setIssueDate(\DateTimeInterface $issueDate): void
+    {
+        // 发放日期功能待实现
+    }
+
+    public function setExpiryDate(?\DateTimeInterface $expiryDate): void
+    {
+        // 到期日期功能待实现
     }
 }

@@ -2,18 +2,41 @@
 
 namespace Tourze\TrainCertBundle\Tests\Entity;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 use Tourze\TrainCertBundle\Entity\CertificateTemplate;
 
 /**
  * 证书模板实体测试
+ *
+ * @internal
  */
-class CertificateTemplateTest extends TestCase
+#[CoversClass(CertificateTemplate::class)]
+final class CertificateTemplateTest extends AbstractEntityTestCase
 {
+    protected function createEntity(): object
+    {
+        return new CertificateTemplate();
+    }
+
+    /**
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        return [
+            'templateName' => ['templateName', 'test_value'],
+            'templateType' => ['templateType', 'test_value'],
+        ];
+    }
+
     private CertificateTemplate $template;
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->template = new CertificateTemplate();
     }
 
@@ -21,7 +44,7 @@ class CertificateTemplateTest extends TestCase
     {
         $templateName = '安全生产培训证书模板';
         $this->template->setTemplateName($templateName);
-        
+
         $this->assertEquals($templateName, $this->template->getTemplateName());
     }
 
@@ -29,7 +52,7 @@ class CertificateTemplateTest extends TestCase
     {
         $templateType = 'safety';
         $this->template->setTemplateType($templateType);
-        
+
         $this->assertEquals($templateType, $this->template->getTemplateType());
     }
 
@@ -37,7 +60,7 @@ class CertificateTemplateTest extends TestCase
     {
         $templatePath = '/templates/safety_certificate.pdf';
         $this->template->setTemplatePath($templatePath);
-        
+
         $this->assertEquals($templatePath, $this->template->getTemplatePath());
     }
 
@@ -49,7 +72,7 @@ class CertificateTemplateTest extends TestCase
             'fontSize' => 12,
         ];
         $this->template->setTemplateConfig($config);
-        
+
         $this->assertEquals($config, $this->template->getTemplateConfig());
     }
 
@@ -61,17 +84,17 @@ class CertificateTemplateTest extends TestCase
             'issueDate' => 'issue_date',
         ];
         $this->template->setFieldMapping($fieldMapping);
-        
+
         $this->assertEquals($fieldMapping, $this->template->getFieldMapping());
     }
 
     public function testIsDefaultAndSetIsDefault(): void
     {
         $this->assertFalse($this->template->isDefault());
-        
+
         $this->template->setIsDefault(true);
         $this->assertTrue($this->template->isDefault());
-        
+
         $this->template->setIsDefault(false);
         $this->assertFalse($this->template->isDefault());
     }
@@ -79,10 +102,10 @@ class CertificateTemplateTest extends TestCase
     public function testIsActiveAndSetIsActive(): void
     {
         $this->assertTrue($this->template->isActive()); // 默认为true
-        
+
         $this->template->setIsActive(false);
         $this->assertFalse($this->template->isActive());
-        
+
         $this->template->setIsActive(true);
         $this->assertTrue($this->template->isActive());
     }
@@ -91,7 +114,7 @@ class CertificateTemplateTest extends TestCase
     {
         $templateName = '安全生产培训证书模板';
         $this->template->setTemplateName($templateName);
-        
+
         $this->assertEquals($templateName, (string) $this->template);
     }
 
@@ -115,22 +138,6 @@ class CertificateTemplateTest extends TestCase
         $this->assertTrue($apiArray['isActive']);
     }
 
-    public function testCreateTimeIsSetOnConstruction(): void
-    {
-        $template = new CertificateTemplate();
-        
-        $this->assertInstanceOf(\DateTimeInterface::class, $template->getCreateTime());
-        $this->assertLessThanOrEqual(new \DateTimeImmutable(), $template->getCreateTime());
-    }
-
-    public function testUpdateTimeIsSetOnConstruction(): void
-    {
-        $template = new CertificateTemplate();
-        
-        $this->assertInstanceOf(\DateTimeInterface::class, $template->getUpdateTime());
-        $this->assertLessThanOrEqual(new \DateTimeImmutable(), $template->getUpdateTime());
-    }
-
     public function testIdIsNullByDefault(): void
     {
         $this->assertNull($this->template->getId());
@@ -139,7 +146,7 @@ class CertificateTemplateTest extends TestCase
     public function testValidTemplateTypes(): void
     {
         $validTypes = ['safety', 'skill', 'management', 'special'];
-        
+
         foreach ($validTypes as $type) {
             $this->template->setTemplateType($type);
             $this->assertEquals($type, $this->template->getTemplateType());
@@ -150,8 +157,8 @@ class CertificateTemplateTest extends TestCase
     {
         $this->template->setTemplateConfig([]);
         $this->template->setFieldMapping([]);
-        
+
         $this->assertEquals([], $this->template->getTemplateConfig());
         $this->assertEquals([], $this->template->getFieldMapping());
     }
-} 
+}

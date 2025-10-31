@@ -2,6 +2,7 @@
 
 namespace Tourze\TrainCertBundle\Command;
 
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -18,18 +19,16 @@ use Tourze\TrainCertBundle\Service\CertificateTemplateService;
  * 证书生成命令
  * 支持单个和批量证书生成
  */
-#[AsCommand(
-    name: self::NAME,
-    description: '生成证书',
-)]
+#[AsCommand(name: self::NAME, description: '生成证书')]
+#[WithMonologChannel(channel: 'train_cert')]
 class CertificateGenerateCommand extends Command
 {
-    
     public const NAME = 'certificate:generate';
-public function __construct(
+
+    public function __construct(
         private readonly CertificateGeneratorService $generatorService,
         private readonly CertificateTemplateService $templateService,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
         parent::__construct();
     }
@@ -43,34 +42,29 @@ public function __construct(
             ->addOption('batch-size', 'b', InputOption::VALUE_OPTIONAL, '批处理大小', 100)
             ->addOption('dry-run', null, InputOption::VALUE_NONE, '试运行模式，不实际生成证书')
             ->addOption('output-dir', 'o', InputOption::VALUE_OPTIONAL, '输出目录', '/tmp/certificates')
-            ->setHelp('
-此命令用于生成证书。可以为单个用户或批量用户生成证书。
-
-示例:
-  # 为单个用户生成证书
-  php bin/console certificate:generate template123 --user-ids=user456
-
-  # 为多个用户批量生成证书
-  php bin/console certificate:generate template123 --user-ids=user1,user2,user3
-
-  # 从文件读取用户ID列表
-  php bin/console certificate:generate template123 --user-file=/path/to/users.txt
-
-  # 试运行模式
-  php bin/console certificate:generate template123 --user-ids=user456 --dry-run
-');
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $templateId = $input->getArgument('template-id');
+        $templateIdArg = $input->getArgument('template-id');
+        $batchSizeOption = $input->getOption('batch-size');
+
+        if (!is_string($templateIdArg)) {
+            $io->error('模板ID必须为字符串');
+
+            return Command::FAILURE;
+        }
+
+        $templateId = $templateIdArg;
         $userIds = $this->getUserIds($input);
-        $batchSize = (int) $input->getOption('batch-size');
+        $batchSize = is_numeric($batchSizeOption) ? (int) $batchSizeOption : 100;
         $isDryRun = (bool) $input->getOption('dry-run');
 
-        if ((bool) empty($userIds)) {
+        if (0 === count($userIds)) {
             $io->error('必须提供用户ID列表');
+
             return Command::FAILURE;
         }
 
@@ -84,12 +78,13 @@ public function __construct(
         $io->info(sprintf('用户数量: %d', count($userIds)));
         $io->info(sprintf('批处理大小: %d', $batchSize));
 
-        if ((bool) $isDryRun) {
+        if ($isDryRun) {
             $io->warning('试运行模式 - 不会实际生成证书');
         }
 
         if (!$io->confirm('确认开始生成证书？', false)) {
             $io->info('操作已取消');
+
             return Command::SUCCESS;
         }
 
@@ -98,6 +93,8 @@ public function __construct(
 
     /**
      * 获取用户ID列表
+     *
+     * @return array<string>
      */
     private function getUserIds(InputInterface $input): array
     {
@@ -105,19 +102,24 @@ public function __construct(
 
         // 从命令行参数获取
         $userIdsOption = $input->getOption('user-ids');
-        if (!empty($userIdsOption)) {
+        if (is_string($userIdsOption) && '' !== $userIdsOption) {
             $userIds = array_map('trim', explode(',', $userIdsOption));
         }
 
         // 从文件获取
         $userFile = $input->getOption('user-file');
-        if (!empty($userFile)) {
+        if (is_string($userFile) && '' !== $userFile) {
             if (!file_exists($userFile)) {
                 throw new InvalidArgumentException("用户文件不存在: {$userFile}");
             }
 
+            $fileContent = file($userFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if (false === $fileContent) {
+                throw new InvalidArgumentException("无法读取用户文件: {$userFile}");
+            }
             $fileUserIds = array_filter(
-                array_map('trim', file($userFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))
+                array_map('trim', $fileContent),
+                static fn (string $userId): bool => '' !== $userId
             );
             $userIds = array_merge($userIds, $fileUserIds);
         }
@@ -145,6 +147,7 @@ public function __construct(
 
             if (!$templateExists) {
                 $io->error(sprintf('模板不存在: %s', $templateId));
+
                 return false;
             }
 
@@ -152,89 +155,110 @@ public function __construct(
         } catch (\Throwable $e) {
             $io->error(sprintf('验证模板失败: %s', $e->getMessage()));
             $this->logger->error('验证模板失败', ['templateId' => $templateId, 'error' => $e]);
+
             return false;
         }
     }
 
     /**
      * 生成证书
+     *
+     * @param array<string> $userIds
      */
     private function generateCertificates(
         array $userIds,
         string $templateId,
         int $batchSize,
         bool $isDryRun,
-        SymfonyStyle $io
+        SymfonyStyle $io,
     ): int {
         $totalUsers = count($userIds);
         $successCount = 0;
-        $failureCount = 0;
-        $batches = array_chunk($userIds, $batchSize);
+        $batches = array_chunk($userIds, max(1, $batchSize));
 
         $io->progressStart($totalUsers);
 
         foreach ($batches as $batchIndex => $batch) {
             $io->section(sprintf('处理批次 %d/%d', $batchIndex + 1, count($batches)));
-
-            foreach ($batch as $userId) {
-                try {
-                    if (!$isDryRun) {
-                        $certificate = $this->generatorService->generateSingleCertificate(
-                            $userId,
-                            $templateId,
-                            ['issuingAuthority' => '培训管理系统']
-                        );
-
-                        $this->logger->info('证书生成成功', [
-                            'userId' => $userId,
-                            'certificateId' => $certificate->getId(),
-                            'templateId' => $templateId,
-                        ]);
-                    }
-
-                    $successCount++;
-                    $io->progressAdvance();
-
-                } catch (\Throwable $e) {
-                    $failureCount++;
-                    $io->progressAdvance();
-
-                    $this->logger->error('证书生成失败', [
-                        'userId' => $userId,
-                        'templateId' => $templateId,
-                        'error' => $e,
-                    ]);
-
-                    if ($io->isVerbose()) {
-                        $io->warning(sprintf('用户 %s 证书生成失败: %s', $userId, $e->getMessage()));
-                    }
-                }
-            }
-
-            // 批次间短暂休息，避免系统负载过高
-            if ($batchIndex < count($batches) - 1) {
-                usleep(100000); // 0.1秒
-            }
+            $successCount += $this->processCertificateBatch($batch, $templateId, $isDryRun, $io);
         }
 
         $io->progressFinish();
 
-        // 显示结果统计
-        $io->success('证书生成任务完成');
-        $io->table(
-            ['统计项', '数量'],
-            [
-                ['总用户数', $totalUsers],
-                ['成功生成', $successCount],
-                ['生成失败', $failureCount],
-                ['成功率', sprintf('%.2f%%', $totalUsers > 0 ? ($successCount / $totalUsers) * 100 : 0)],
-            ]
-        );
+        return $successCount;
+    }
 
-        if ($failureCount > 0) {
-            $io->warning(sprintf('有 %d 个证书生成失败，请检查日志获取详细信息', $failureCount));
+    /**
+     * 处理证书生成批次
+     * @param array<string> $batch
+     */
+    private function processCertificateBatch(
+        array $batch,
+        string $templateId,
+        bool $isDryRun,
+        SymfonyStyle $io,
+    ): int {
+        $successCount = 0;
+
+        foreach ($batch as $userId) {
+            if ($this->generateSingleUserCertificate($userId, $templateId, $isDryRun, $io)) {
+                ++$successCount;
+            }
+            $io->progressAdvance();
         }
 
-        return $failureCount > 0 ? Command::FAILURE : Command::SUCCESS;
+        return $successCount;
     }
-} 
+
+    /**
+     * 为单个用户生成证书
+     */
+    private function generateSingleUserCertificate(
+        string $userId,
+        string $templateId,
+        bool $isDryRun,
+        SymfonyStyle $io,
+    ): bool {
+        try {
+            if (!$isDryRun) {
+                $certificate = $this->generatorService->generateSingleCertificate(
+                    $userId,
+                    $templateId,
+                    ['issuingAuthority' => '培训管理系统']
+                );
+
+                $this->logger->info('证书生成成功', [
+                    'userId' => $userId,
+                    'certificateId' => $certificate->getId(),
+                    'templateId' => $templateId,
+                ]);
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logCertificateGenerationError($userId, $templateId, $e, $io);
+
+            return false;
+        }
+    }
+
+    /**
+     * 记录证书生成错误
+     */
+    private function logCertificateGenerationError(
+        string $userId,
+        string $templateId,
+        \Throwable $e,
+        SymfonyStyle $io,
+    ): void {
+        $this->logger->error('证书生成失败', [
+            'userId' => $userId,
+            'templateId' => $templateId,
+            'error' => $e,
+        ]);
+
+        if ($io->isVerbose()) {
+            $io->warning(sprintf('用户 %s 证书生成失败: %s', $userId, $e->getMessage()));
+        }
+    }
+}

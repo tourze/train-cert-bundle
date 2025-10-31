@@ -2,7 +2,9 @@
 
 namespace Tourze\TrainCertBundle\Service;
 
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Tourze\TrainCertBundle\Entity\Certificate;
@@ -13,12 +15,14 @@ use Tourze\TrainCertBundle\Repository\CertificateRecordRepository;
  * 证书通知服务类
  * 负责证书相关的通知功能，包括发放通知、验证通知、过期提醒等
  */
+#[WithMonologChannel(channel: 'train_cert')]
+#[Autoconfigure(public: true)]
 class CertificateNotificationService
 {
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
-        private readonly CertificateRecordRepository $recordRepository
+        private readonly CertificateRecordRepository $recordRepository,
     ) {
     }
 
@@ -26,19 +30,27 @@ class CertificateNotificationService
      * 发送证书发放通知
      *
      * @param string $certificateId 证书ID
-     * @return void
      */
     public function sendCertificateIssueNotification(string $certificateId): void
     {
         try {
             $record = $this->recordRepository->findOneBy(['certificate' => $certificateId]);
-            if ($record === null) {
+            if (null === $record) {
                 $this->logger->warning('证书记录不存在，无法发送发放通知', ['certificateId' => $certificateId]);
+
                 return;
             }
 
             $certificate = $record->getCertificate();
             $user = $certificate->getUser();
+
+            if (null === $user) {
+                $this->logger->warning('证书用户为空，无法发送通知', [
+                    'certificateId' => $certificateId,
+                ]);
+
+                return;
+            }
 
             // 构建邮件内容
             $subject = '证书发放通知 - ' . $certificate->getTitle();
@@ -51,7 +63,6 @@ class CertificateNotificationService
                 'certificateId' => $certificateId,
                 'recipient' => $user->getUserIdentifier(),
             ]);
-
         } catch (\Throwable $e) {
             $this->logger->error('发送证书发放通知失败', [
                 'certificateId' => $certificateId,
@@ -63,21 +74,29 @@ class CertificateNotificationService
     /**
      * 发送证书验证通知
      *
-     * @param string $certificateId 证书ID
-     * @param array $verificationData 验证数据
-     * @return void
+     * @param string               $certificateId    证书ID
+     * @param array<string, mixed> $verificationData 验证数据
      */
     public function sendVerificationNotification(string $certificateId, array $verificationData): void
     {
         try {
             $record = $this->recordRepository->findOneBy(['certificate' => $certificateId]);
-            if ($record === null) {
+            if (null === $record) {
                 $this->logger->warning('证书记录不存在，无法发送验证通知', ['certificateId' => $certificateId]);
+
                 return;
             }
 
             $certificate = $record->getCertificate();
             $user = $certificate->getUser();
+
+            if (null === $user) {
+                $this->logger->warning('证书用户为空，无法发送验证通知', [
+                    'certificateId' => $certificateId,
+                ]);
+
+                return;
+            }
 
             // 构建邮件内容
             $subject = '证书验证通知 - ' . $certificate->getTitle();
@@ -91,7 +110,6 @@ class CertificateNotificationService
                 'recipient' => $user->getUserIdentifier(),
                 'verificationResult' => $verificationData['valid'] ?? false,
             ]);
-
         } catch (\Throwable $e) {
             $this->logger->error('发送证书验证通知失败', [
                 'certificateId' => $certificateId,
@@ -104,7 +122,6 @@ class CertificateNotificationService
      * 发送证书过期提醒
      *
      * @param int $days 提前天数
-     * @return void
      */
     public function sendExpiryReminders(int $days = 30): void
     {
@@ -119,7 +136,6 @@ class CertificateNotificationService
                 'count' => count($expiringRecords),
                 'days' => $days,
             ]);
-
         } catch (\Throwable $e) {
             $this->logger->error('发送证书过期提醒失败', [
                 'error' => $e->getMessage(),
@@ -131,13 +147,20 @@ class CertificateNotificationService
      * 发送单个证书过期提醒
      *
      * @param CertificateRecord $record 证书记录
-     * @return void
      */
     public function sendSingleExpiryReminder(CertificateRecord $record): void
     {
         try {
             $certificate = $record->getCertificate();
             $user = $certificate->getUser();
+
+            if (null === $user) {
+                $this->logger->warning('证书用户为空，无法发送过期提醒', [
+                    'certificateId' => $certificate->getId(),
+                ]);
+
+                return;
+            }
 
             // 构建邮件内容
             $subject = '证书即将过期提醒 - ' . $certificate->getTitle();
@@ -149,10 +172,9 @@ class CertificateNotificationService
             $this->logger->info('证书过期提醒已发送', [
                 'certificateId' => $certificate->getId(),
                 'recipient' => $user->getUserIdentifier(),
-                'expiryDate' => $record->getExpiryDate()->format('Y-m-d'),
+                'expiryDate' => $record->getExpiryDate()?->format('Y-m-d') ?? 'N/A',
                 'remainingDays' => $record->getRemainingDays(),
             ]);
-
         } catch (\Throwable $e) {
             $this->logger->error('发送单个证书过期提醒失败', [
                 'certificateId' => $record->getCertificate()->getId(),
@@ -165,20 +187,28 @@ class CertificateNotificationService
      * 发送证书撤销通知
      *
      * @param string $certificateId 证书ID
-     * @param string $reason 撤销原因
-     * @return void
+     * @param string $reason        撤销原因
      */
     public function sendRevocationNotification(string $certificateId, string $reason): void
     {
         try {
             $record = $this->recordRepository->findOneBy(['certificate' => $certificateId]);
-            if ($record === null) {
+            if (null === $record) {
                 $this->logger->warning('证书记录不存在，无法发送撤销通知', ['certificateId' => $certificateId]);
+
                 return;
             }
 
             $certificate = $record->getCertificate();
             $user = $certificate->getUser();
+
+            if (null === $user) {
+                $this->logger->warning('证书用户为空，无法发送撤销通知', [
+                    'certificateId' => $certificateId,
+                ]);
+
+                return;
+            }
 
             // 构建邮件内容
             $subject = '证书撤销通知 - ' . $certificate->getTitle();
@@ -192,7 +222,6 @@ class CertificateNotificationService
                 'recipient' => $user->getUserIdentifier(),
                 'reason' => $reason,
             ]);
-
         } catch (\Throwable $e) {
             $this->logger->error('发送证书撤销通知失败', [
                 'certificateId' => $certificateId,
@@ -205,9 +234,8 @@ class CertificateNotificationService
      * 发送邮件
      *
      * @param string $recipient 收件人
-     * @param string $subject 主题
-     * @param string $content 内容
-     * @return void
+     * @param string $subject   主题
+     * @param string $content   内容
      */
     private function sendEmail(string $recipient, string $subject, string $content): void
     {
@@ -215,7 +243,8 @@ class CertificateNotificationService
             ->from('noreply@training-system.com')
             ->to($recipient)
             ->subject($subject)
-            ->html($content);
+            ->html($content)
+        ;
 
         $this->mailer->send($email);
     }
@@ -223,8 +252,9 @@ class CertificateNotificationService
     /**
      * 构建证书发放通知内容
      *
-     * @param Certificate $certificate 证书对象
-     * @param CertificateRecord $record 证书记录
+     * @param Certificate       $certificate 证书对象
+     * @param CertificateRecord $record      证书记录
+     *
      * @return string 邮件内容
      */
     private function buildIssueNotificationContent(Certificate $certificate, CertificateRecord $record): string
@@ -246,7 +276,7 @@ class CertificateNotificationService
             $certificate->getTitle(),
             $record->getCertificateNumber(),
             $record->getIssueDate()->format('Y-m-d'),
-            $record->getExpiryDate()->format('Y-m-d'),
+            $record->getExpiryDate()?->format('Y-m-d') ?? 'N/A',
             $record->getIssuingAuthority(),
             $record->getVerificationCode()
         );
@@ -255,14 +285,15 @@ class CertificateNotificationService
     /**
      * 构建证书验证通知内容
      *
-     * @param Certificate $certificate 证书对象
-     * @param CertificateRecord $record 证书记录
-     * @param array $verificationData 验证数据
+     * @param Certificate          $certificate      证书对象
+     * @param CertificateRecord    $record           证书记录
+     * @param array<string, mixed> $verificationData 验证数据
+     *
      * @return string 邮件内容
      */
     private function buildVerificationNotificationContent(Certificate $certificate, CertificateRecord $record, array $verificationData): string
     {
-        $result = $verificationData['valid'] ? '验证通过' : '验证失败';
+        $result = (true === ($verificationData['valid'] ?? false)) ? '验证通过' : '验证失败';
         $time = date('Y-m-d H:i:s');
 
         return sprintf(
@@ -288,8 +319,9 @@ class CertificateNotificationService
     /**
      * 构建证书过期提醒内容
      *
-     * @param Certificate $certificate 证书对象
-     * @param CertificateRecord $record 证书记录
+     * @param Certificate       $certificate 证书对象
+     * @param CertificateRecord $record      证书记录
+     *
      * @return string 邮件内容
      */
     private function buildExpiryReminderContent(Certificate $certificate, CertificateRecord $record): string
@@ -307,7 +339,7 @@ class CertificateNotificationService
             <p>为避免影响您的正常使用，请尽快联系我们办理续期手续。</p>',
             $certificate->getTitle(),
             $record->getCertificateNumber(),
-            $record->getExpiryDate()->format('Y-m-d'),
+            $record->getExpiryDate()?->format('Y-m-d') ?? 'N/A',
             $record->getRemainingDays()
         );
     }
@@ -315,9 +347,10 @@ class CertificateNotificationService
     /**
      * 构建证书撤销通知内容
      *
-     * @param Certificate $certificate 证书对象
-     * @param CertificateRecord $record 证书记录
-     * @param string $reason 撤销原因
+     * @param Certificate       $certificate 证书对象
+     * @param CertificateRecord $record      证书记录
+     * @param string            $reason      撤销原因
+     *
      * @return string 邮件内容
      */
     private function buildRevocationNotificationContent(Certificate $certificate, CertificateRecord $record, string $reason): string
@@ -339,4 +372,4 @@ class CertificateNotificationService
             date('Y-m-d H:i:s')
         );
     }
-} 
+}

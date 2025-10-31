@@ -1,0 +1,169 @@
+Note: Using configuration file /home/admin/work/source/php-monorepo/phpstan.neon.
+  0/42 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%[1G[2K 20/42 [▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░]  47%[1G[2K 40/42 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░]  95%[1G[2K 42/42 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
+
+ ------ ----------------------------------------------------------------------- 
+  Line   DataFixtures/CertificateFixtures.php                                   
+ ------ ----------------------------------------------------------------------- 
+  52     Instead of calling "->getRepository(BizUser::class)" service locator,  
+         inject service repository                                              
+         "BizUserBundle\Repository\BizUserRepository" via constructor and use   
+         it directly                                                            
+         🪪  doctrine.injectServiceRepository                                   
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------ 
+  Line   DataFixtures/CertificateVerificationFixtures.php                  
+ ------ ------------------------------------------------------------------ 
+  20     Instead of calling "->getRepository(Certificate::class)" service  
+         locator, inject service repository                                
+         "Tourze\TrainCertBundle\Repository\CertificateRepository" via     
+         constructor and use it directly                                   
+         🪪  doctrine.injectServiceRepository                              
+  23     Construct empty() is not allowed. Use more strict comparison.     
+         🪪  empty.notAllowed                                              
+ ------ ------------------------------------------------------------------ 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/CertificateTemplate.php                                         
+ ------ ----------------------------------------------------------------------- 
+  24     实体类 Tourze\TrainCertBundle\Entity\CertificateTemplate 不应使用      
+         @ORM\HasLifecycleCallbacks。请使用                                     
+         Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener              
+         来处理实体事件。参考：https://symfony.com/doc/current/doctrine/events.html#doctr  
+         ine-entity-listeners                                                   
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Repository/CertificateApplicationRepository.php                        
+ ------ ----------------------------------------------------------------------- 
+  48     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateApplicationRepository::f  
+         indByUserId() should return array<int, Tourze\TrainCertBundle\Entity\  
+         CertificateApplication> but returns mixed.                             
+         🪪  return.type                                                        
+  66     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateApplicationRepository::f  
+         indByStatus() should return array<int, Tourze\TrainCertBundle\Entity\  
+         CertificateApplication> but returns mixed.                             
+         🪪  return.type                                                        
+  104    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateApplicationRepository::f  
+         indByTemplateId() should return array<int, Tourze\TrainCertBundle\Ent  
+         ity\CertificateApplication> but returns mixed.                         
+         🪪  return.type                                                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Repository/CertificateAuditRepository.php                              
+ ------ ----------------------------------------------------------------------- 
+  48     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateAuditRepository::findByA  
+         pplicationId() should return array<int, Tourze\TrainCertBundle\Entity  
+         \CertificateAudit> but returns mixed.                                  
+         🪪  return.type                                                        
+  66     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateAuditRepository::findPen  
+         dingAudits() should return array<int, Tourze\TrainCertBundle\Entity\C  
+         ertificateAudit> but returns mixed.                                    
+         🪪  return.type                                                        
+  84     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateAuditRepository::findByA  
+         uditor() should return array<int, Tourze\TrainCertBundle\Entity\Certi  
+         ficateAudit> but returns mixed.                                        
+         🪪  return.type                                                        
+  102    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateAuditRepository::findCom  
+         pletedAudits() should return array<int, Tourze\TrainCertBundle\Entity  
+         \CertificateAudit> but returns mixed.                                  
+         🪪  return.type                                                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Repository/CertificateRecordRepository.php                             
+ ------ ----------------------------------------------------------------------- 
+  67     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateRecordRepository::findEx  
+         piringCertificates() should return array<int, Tourze\TrainCertBundle\  
+         Entity\CertificateRecord> but returns mixed.                           
+         🪪  return.type                                                        
+  87     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateRecordRepository::findEx  
+         piredCertificates() should return array<int, Tourze\TrainCertBundle\E  
+         ntity\CertificateRecord> but returns mixed.                            
+         🪪  return.type                                                        
+  105    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateRecordRepository::findBy  
+         CertificateType() should return array<int, Tourze\TrainCertBundle\Ent  
+         ity\CertificateRecord> but returns mixed.                              
+         🪪  return.type                                                        
+  123    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateRecordRepository::findBy  
+         IssuingAuthority() should return array<int, Tourze\TrainCertBundle\En  
+         tity\CertificateRecord> but returns mixed.                             
+         🪪  return.type                                                        
+  141    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateRecordRepository::findEx  
+         piredBefore() should return array<int, Tourze\TrainCertBundle\Entity\  
+         CertificateRecord> but returns mixed.                                  
+         🪪  return.type                                                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Repository/CertificateTemplateRepository.php                           
+ ------ ----------------------------------------------------------------------- 
+  48     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateTemplateRepository::find  
+         ActiveTemplates() should return array<int, Tourze\TrainCertBundle\Ent  
+         ity\CertificateTemplate> but returns mixed.                            
+         🪪  return.type                                                        
+  66     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateTemplateRepository::find  
+         ByType() should return array<int, Tourze\TrainCertBundle\Entity\Certi  
+         ficateTemplate> but returns mixed.                                     
+         🪪  return.type                                                        
+  84     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateTemplateRepository::find  
+         DefaultTemplate() should return                                        
+         Tourze\TrainCertBundle\Entity\CertificateTemplate|null but returns     
+         mixed.                                                                 
+         🪪  return.type                                                        
+  101    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateTemplateRepository::find  
+         DefaultTemplateByType() should return                                  
+         Tourze\TrainCertBundle\Entity\CertificateTemplate|null but returns     
+         mixed.                                                                 
+         🪪  return.type                                                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Repository/CertificateVerificationRepository.php                       
+ ------ ----------------------------------------------------------------------- 
+  48     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateVerificationRepository::  
+         findByCertificateId() should return array<int, Tourze\TrainCertBundle  
+         \Entity\CertificateVerification> but returns mixed.                    
+         🪪  return.type                                                        
+  66     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateVerificationRepository::  
+         findSuccessfulVerifications() should return array<int, Tourze\TrainCe  
+         rtBundle\Entity\CertificateVerification> but returns mixed.            
+         🪪  return.type                                                        
+  84     Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateVerificationRepository::  
+         findByIpAddress() should return array<int, Tourze\TrainCertBundle\Ent  
+         ity\CertificateVerification> but returns mixed.                        
+         🪪  return.type                                                        
+  102    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateVerificationRepository::  
+         findVerificationsBeforeDate() should return array<int, Tourze\TrainCe  
+         rtBundle\Entity\CertificateVerification> but returns mixed.            
+         🪪  return.type                                                        
+  140    Method                                                                 
+         Tourze\TrainCertBundle\Repository\CertificateVerificationRepository::  
+         getVerificationStatistics() should return array<string, mixed> but re  
+         turns mixed.                                                           
+         🪪  return.type                                                        
+ ------ ----------------------------------------------------------------------- 
+
+ [ERROR] Found 25 errors                                                        
+

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainCertBundle\Controller\Admin;
 
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminCrud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
@@ -19,8 +22,11 @@ use Tourze\TrainCertBundle\Entity\CertificateVerification;
 
 /**
  * 证书验证管理控制器
+ *
+ * @extends AbstractCrudController<CertificateVerification>
  */
-class CertificateVerificationCrudController extends AbstractCrudController
+#[AdminCrud(routePath: '/train-cert/certificate-verification', routeName: 'train_cert_certificate_verification')]
+final class CertificateVerificationCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
@@ -36,7 +42,8 @@ class CertificateVerificationCrudController extends AbstractCrudController
             ->setPageTitle('detail', '验证记录详情')
             ->setDefaultSort(['verificationTime' => 'DESC'])
             ->setPaginatorPageSize(30)
-            ->showEntityActionsInlined();
+            ->showEntityActionsInlined()
+        ;
     }
 
     public function configureFilters(Filters $filters): Filters
@@ -49,7 +56,8 @@ class CertificateVerificationCrudController extends AbstractCrudController
                     '验证码' => 'verification_code',
                     '二维码' => 'qr_code',
                 ]))
-            ->add(DateTimeFilter::new('verificationTime', '验证时间'));
+            ->add(DateTimeFilter::new('verificationTime', '验证时间'))
+        ;
     }
 
     public function configureFields(string $pageName): iterable
@@ -61,9 +69,15 @@ class CertificateVerificationCrudController extends AbstractCrudController
             AssociationField::new('certificate', '证书')
                 ->autocomplete()
                 ->formatValue(function ($value, $entity) {
-                    if ($entity->getCertificate()) {
-                        return $entity->getCertificate()->getTitle();
+                    if (!$entity instanceof CertificateVerification) {
+                        return '实体类型错误';
                     }
+
+                    $certificate = $entity->getCertificate();
+                    if (null !== $certificate) {
+                        return $certificate->getTitle();
+                    }
+
                     return '未关联证书';
                 }),
 
@@ -94,4 +108,4 @@ class CertificateVerificationCrudController extends AbstractCrudController
                 ->setFormat('yyyy-MM-dd HH:mm:ss'),
         ];
     }
-} 
+}

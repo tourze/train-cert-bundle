@@ -3,6 +3,8 @@
 namespace Tourze\TrainCertBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Tourze\TrainCertBundle\Entity\Certificate;
 use Tourze\TrainCertBundle\Entity\CertificateRecord;
@@ -14,13 +16,14 @@ use Tourze\TrainCertBundle\Repository\CertificateVerificationRepository;
  * 证书验证服务类
  * 负责证书的验证、查询、验证记录管理等功能
  */
+#[Autoconfigure(public: true)]
 class CertificateVerificationService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly CertificateRecordRepository $recordRepository,
         private readonly CertificateVerificationRepository $verificationRepository,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
     ) {
     }
 
@@ -28,13 +31,14 @@ class CertificateVerificationService
      * 验证证书
      *
      * @param string $certificateNumber 证书编号
-     * @return array 验证结果
+     *
+     * @return array<string, mixed> 验证结果
      */
     public function verifyCertificate(string $certificateNumber): array
     {
         $record = $this->recordRepository->findOneBy(['certificateNumber' => $certificateNumber]);
-        
-        if ($record === null) {
+
+        if (null === $record) {
             $result = [
                 'valid' => false,
                 'message' => '证书不存在',
@@ -54,13 +58,14 @@ class CertificateVerificationService
      * 通过验证码验证证书
      *
      * @param string $verificationCode 验证码
-     * @return array 验证结果
+     *
+     * @return array<string, mixed> 验证结果
      */
     public function verifyByVerificationCode(string $verificationCode): array
     {
         $record = $this->recordRepository->findOneBy(['verificationCode' => $verificationCode]);
-        
-        if ($record === null) {
+
+        if (null === $record) {
             $result = [
                 'valid' => false,
                 'message' => '验证码无效',
@@ -79,21 +84,22 @@ class CertificateVerificationService
     /**
      * 记录验证过程
      *
-     * @param Certificate|null $certificate 证书对象
-     * @param string $verificationMethod 验证方式
-     * @param array $verificationData 验证数据
+     * @param Certificate|null $certificate        证书对象
+     * @param string           $verificationMethod 验证方式
+     * @param array<string, mixed> $verificationData   验证数据
+     *
      * @return CertificateVerification 验证记录
      */
     public function recordVerification(?Certificate $certificate, string $verificationMethod, array $verificationData): CertificateVerification
     {
         $verification = new CertificateVerification();
-        
+
         if ((bool) $certificate) {
             $verification->setCertificate($certificate);
         }
-        
+
         $verification->setVerificationMethod($verificationMethod);
-        $verification->setVerificationResult($verificationData['valid']);
+        $verification->setVerificationResult((bool) $verificationData['valid']);
         $verification->setVerificationDetails($verificationData);
 
         // 获取请求信息
@@ -113,13 +119,14 @@ class CertificateVerificationService
     /**
      * 批量验证证书
      *
-     * @param array $certificateNumbers 证书编号列表
-     * @return array 验证结果列表
+     * @param array<string> $certificateNumbers 证书编号列表
+     *
+     * @return array<string, array<string, mixed>> 验证结果列表
      */
     public function batchVerifyCertificates(array $certificateNumbers): array
     {
         $results = [];
-        
+
         foreach ($certificateNumbers as $number) {
             $results[$number] = $this->verifyCertificate($number);
         }
@@ -131,25 +138,31 @@ class CertificateVerificationService
      * 获取证书详细信息
      *
      * @param string $certificateNumber 证书编号
-     * @return array|null 证书信息
+     *
+     * @return array<string, mixed>|null 证书信息
      */
     public function getCertificateDetails(string $certificateNumber): ?array
     {
         $record = $this->recordRepository->findOneBy(['certificateNumber' => $certificateNumber]);
-        
-        if ($record === null) {
+
+        if (null === $record) {
             return null;
         }
 
         $certificate = $record->getCertificate();
-        
+        $user = $certificate->getUser();
+
+        if (null === $user) {
+            return null;
+        }
+
         return [
             'certificateNumber' => $record->getCertificateNumber(),
             'certificateType' => $record->getCertificateType(),
-            'holderName' => $certificate->getUser()->getUserIdentifier(),
+            'holderName' => $user->getUserIdentifier(),
             'title' => $certificate->getTitle(),
             'issueDate' => $record->getIssueDate()->format('Y-m-d'),
-            'expiryDate' => $record->getExpiryDate()->format('Y-m-d'),
+            'expiryDate' => $record->getExpiryDate()?->format('Y-m-d') ?? 'N/A',
             'issuingAuthority' => $record->getIssuingAuthority(),
             'verificationCode' => $record->getVerificationCode(),
             'isValid' => $certificate->isValid(),
@@ -163,6 +176,7 @@ class CertificateVerificationService
      * 获取验证历史
      *
      * @param string $certificateId 证书ID
+     *
      * @return CertificateVerification[] 验证历史
      */
     public function getVerificationHistory(string $certificateId): array
@@ -174,35 +188,24 @@ class CertificateVerificationService
      * 获取验证统计
      *
      * @param \DateTimeInterface|null $startDate 开始日期
-     * @param \DateTimeInterface|null $endDate 结束日期
-     * @return array 统计数据
+     * @param \DateTimeInterface|null $endDate   结束日期
+     *
+     * @return array<string, mixed> 统计数据
      */
     public function getVerificationStatistics(?\DateTimeInterface $startDate = null, ?\DateTimeInterface $endDate = null): array
     {
-        $qb = $this->entityManager->createQueryBuilder();
-        $qb->select('COUNT(v.id) as total_verifications')
-           ->addSelect('SUM(CASE WHEN v.verificationResult = true THEN 1 ELSE 0 END) as successful_verifications')
-           ->addSelect('SUM(CASE WHEN v.verificationResult = false THEN 1 ELSE 0 END) as failed_verifications')
-           ->from(CertificateVerification::class, 'v');
+        $result = $this->verificationRepository->getVerificationStatistics($startDate, $endDate);
 
-        if ((bool) $startDate) {
-            $qb->andWhere('v.verificationTime >= :startDate')
-               ->setParameter('startDate', $startDate);
-        }
-
-        if ((bool) $endDate) {
-            $qb->andWhere('v.verificationTime <= :endDate')
-               ->setParameter('endDate', $endDate);
-        }
-
-        $result = $qb->getQuery()->getSingleResult();
+        $totalVerifications = is_numeric($result['total_verifications']) ? (int) $result['total_verifications'] : 0;
+        $successfulVerifications = is_numeric($result['successful_verifications']) ? (int) $result['successful_verifications'] : 0;
+        $failedVerifications = is_numeric($result['failed_verifications']) ? (int) $result['failed_verifications'] : 0;
 
         return [
-            'totalVerifications' => (int) $result['total_verifications'],
-            'successfulVerifications' => (int) $result['successful_verifications'],
-            'failedVerifications' => (int) $result['failed_verifications'],
-            'successRate' => $result['total_verifications'] > 0 
-                ? round($result['successful_verifications'] / $result['total_verifications'] * 100, 2) 
+            'totalVerifications' => $totalVerifications,
+            'successfulVerifications' => $successfulVerifications,
+            'failedVerifications' => $failedVerifications,
+            'successRate' => $totalVerifications > 0
+                ? round($successfulVerifications / $totalVerifications * 100, 2)
                 : 0,
         ];
     }
@@ -211,8 +214,9 @@ class CertificateVerificationService
      * 检查证书是否被频繁验证
      *
      * @param string $certificateId 证书ID
-     * @param int $timeWindow 时间窗口（秒）
-     * @param int $threshold 阈值
+     * @param int    $timeWindow    时间窗口（秒）
+     * @param int    $threshold     阈值
+     *
      * @return bool 是否频繁验证
      */
     public function isFrequentlyVerified(string $certificateId, int $timeWindow = 3600, int $threshold = 10): bool
@@ -220,15 +224,7 @@ class CertificateVerificationService
         $since = new \DateTime();
         $since->sub(new \DateInterval("PT{$timeWindow}S"));
 
-        $count = $this->entityManager->createQueryBuilder()
-            ->select('COUNT(v.id)')
-            ->from(CertificateVerification::class, 'v')
-            ->where('v.certificate = :certificateId')
-            ->andWhere('v.verificationTime >= :since')
-            ->setParameter('certificateId', $certificateId)
-            ->setParameter('since', $since)
-            ->getQuery()
-            ->getSingleScalarResult();
+        $count = $this->verificationRepository->countVerificationsSince($certificateId, $since);
 
         return $count >= $threshold;
     }
@@ -237,16 +233,23 @@ class CertificateVerificationService
      * 验证证书记录
      *
      * @param CertificateRecord $record 证书记录
-     * @return array 验证结果
+     *
+     * @return array<string, mixed> 验证结果
      */
     private function validateCertificateRecord(CertificateRecord $record): array
     {
         $certificate = $record->getCertificate();
+        $user = $certificate->getUser();
         $errors = [];
         $warnings = [];
 
+        // 检查用户是否存在
+        if (null === $user) {
+            $errors[] = '证书用户信息缺失';
+        }
+
         // 检查证书是否有效
-        if (!$certificate->isValid()) {
+        if (true !== $certificate->isValid()) {
             $errors[] = '证书已被撤销或无效';
         }
 
@@ -257,7 +260,7 @@ class CertificateVerificationService
             $warnings[] = "证书将在 {$record->getRemainingDays()} 天后过期";
         }
 
-        $isValid = empty($errors);
+        $isValid = 0 === count($errors);
 
         return [
             'valid' => $isValid,
@@ -266,10 +269,10 @@ class CertificateVerificationService
             'data' => [
                 'certificateNumber' => $record->getCertificateNumber(),
                 'certificateType' => $record->getCertificateType(),
-                'holderName' => $certificate->getUser()->getUserIdentifier(),
+                'holderName' => $user?->getUserIdentifier() ?? 'N/A',
                 'title' => $certificate->getTitle(),
                 'issueDate' => $record->getIssueDate()->format('Y-m-d'),
-                'expiryDate' => $record->getExpiryDate()->format('Y-m-d'),
+                'expiryDate' => $record->getExpiryDate()?->format('Y-m-d') ?? 'N/A',
                 'issuingAuthority' => $record->getIssuingAuthority(),
                 'remainingDays' => $record->getRemainingDays(),
             ],
@@ -279,21 +282,22 @@ class CertificateVerificationService
     /**
      * 提取验证者信息
      *
-     * @param \Symfony\Component\HttpFoundation\Request $request 请求对象
+     * @param Request $request 请求对象
+     *
      * @return string 验证者信息
      */
-    private function extractVerifierInfo(\Symfony\Component\HttpFoundation\Request $request): string
+    private function extractVerifierInfo(Request $request): string
     {
         $info = [];
-        
+
         if (($referer = $request->headers->get('Referer')) !== null) {
             $info[] = "来源: {$referer}";
         }
-        
+
         if (($acceptLanguage = $request->headers->get('Accept-Language')) !== null) {
             $info[] = "语言: {$acceptLanguage}";
         }
 
         return implode(', ', $info);
     }
-} 
+}

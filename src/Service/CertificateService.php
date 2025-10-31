@@ -3,6 +3,7 @@
 namespace Tourze\TrainCertBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\TrainCertBundle\Entity\Certificate;
 use Tourze\TrainCertBundle\Entity\CertificateApplication;
@@ -16,6 +17,7 @@ use Tourze\TrainCertBundle\Repository\CertificateTemplateRepository;
  * 证书服务类
  * 负责证书管理的核心业务逻辑，包括证书生成、申请、审核、发放等功能
  */
+#[Autoconfigure(public: true)]
 class CertificateService
 {
     public function __construct(
@@ -23,26 +25,27 @@ class CertificateService
         private readonly CertificateRepository $certificateRepository,
         private readonly CertificateApplicationRepository $applicationRepository,
         private readonly CertificateTemplateRepository $templateRepository,
-        private readonly CertificateGeneratorService $generatorService
+        private readonly CertificateGeneratorService $generatorService,
     ) {
     }
 
     /**
      * 生成证书
      *
-     * @param string $userId 用户ID
-     * @param string $courseId 课程ID（暂时保留，未来可能需要）
+     * @param string $userId     用户ID
+     * @param string $courseId   课程ID（暂时保留，未来可能需要）
      * @param string $templateId 模板ID
+     *
      * @return Certificate 生成的证书
      */
     public function generateCertificate(string $userId, string $courseId, string $templateId): Certificate
     {
         $template = $this->templateRepository->find($templateId);
-        if ($template === null) {
+        if (null === $template) {
             throw new InvalidArgumentException('证书模板不存在');
         }
 
-        if (!$template->isActive()) {
+        if (true !== $template->isActive()) {
             throw new InvalidArgumentException('证书模板未启用');
         }
 
@@ -59,9 +62,10 @@ class CertificateService
     /**
      * 申请证书
      *
-     * @param string $userId 申请用户ID
-     * @param string $courseId 课程ID（暂时保留）
-     * @param array $applicationData 申请数据
+     * @param string $userId          申请用户ID
+     * @param string $courseId        课程ID（暂时保留）
+     * @param array<string, mixed> $applicationData 申请数据
+     *
      * @return CertificateApplication 证书申请记录
      */
     public function applyCertificate(string $userId, string $courseId, array $applicationData): CertificateApplication
@@ -72,15 +76,15 @@ class CertificateService
         // 获取用户对象（这里需要用户服务，暂时简化处理）
         // TODO: 实际实现中需要通过用户服务获取用户对象
         // $user = $this->userService->getUser($userId);
-        
+
         // 获取证书模板
         $templateId = $applicationData['templateId'] ?? null;
-        if ($templateId === null || $templateId === '') {
+        if (null === $templateId || '' === $templateId) {
             throw new InvalidArgumentException('必须指定证书模板');
         }
 
         $template = $this->templateRepository->find($templateId);
-        if ($template === null) {
+        if (null === $template) {
             throw new InvalidArgumentException('证书模板不存在');
         }
 
@@ -89,11 +93,24 @@ class CertificateService
         // TODO: 实际实现中需要设置用户
         // $application->setUser($user);
         $application->setTemplate($template);
-        $application->setApplicationType($applicationData['type'] ?? 'standard');
+        $applicationType = $applicationData['type'] ?? 'standard';
+        assert(is_string($applicationType));
+        $application->setApplicationType($applicationType);
         $application->setApplicationStatus('pending');
         $application->setApplicationData($applicationData);
-        $application->setRequiredDocuments($applicationData['requiredDocuments'] ?? []);
-        $application->setApplicationTime(new \DateTime());
+        $requiredDocuments = $applicationData['requiredDocuments'] ?? [];
+        if (is_array($requiredDocuments)) {
+            // 确保数组键是字符串类型
+            /** @var array<string, mixed> $validatedDocuments */
+            $validatedDocuments = [];
+            foreach ($requiredDocuments as $key => $value) {
+                $validatedDocuments[(string) $key] = $value;
+            }
+            $application->setRequiredDocuments($validatedDocuments);
+        } else {
+            $application->setRequiredDocuments([]);
+        }
+        $application->setApplicationTime(new \DateTimeImmutable());
 
         $this->entityManager->persist($application);
         $this->entityManager->flush();
@@ -105,18 +122,19 @@ class CertificateService
      * 审核证书申请
      *
      * @param string $applicationId 申请ID
-     * @param string $auditResult 审核结果
-     * @param string $comment 审核意见
+     * @param string $auditResult   审核结果
+     * @param string $comment       审核意见
+     *
      * @return CertificateAudit 审核记录
      */
     public function auditCertificate(string $applicationId, string $auditResult, string $comment): CertificateAudit
     {
         $application = $this->applicationRepository->find($applicationId);
-        if ($application === null) {
+        if (null === $application) {
             throw new InvalidArgumentException('证书申请不存在');
         }
 
-        if ($application->getApplicationStatus() !== 'pending') {
+        if ('pending' !== $application->getApplicationStatus()) {
             throw new InvalidArgumentException('申请状态不允许审核');
         }
 
@@ -125,19 +143,19 @@ class CertificateService
         $audit->setApplication($application);
         $audit->setAuditResult($auditResult);
         $audit->setAuditComment($comment);
-        $audit->setAuditTime(new \DateTime());
+        $audit->setAuditTime(new \DateTimeImmutable());
 
         // 更新申请状态
-        if ($auditResult === 'approved') {
+        if ('approved' === $auditResult) {
             $application->setApplicationStatus('approved');
             $audit->setAuditStatus('approved');
-        } elseif ($auditResult === 'rejected') {
+        } elseif ('rejected' === $auditResult) {
             $application->setApplicationStatus('rejected');
             $audit->setAuditStatus('rejected');
         }
 
         $application->setReviewComment($comment);
-        $application->setReviewTime(new \DateTime());
+        $application->setReviewTime(new \DateTimeImmutable());
 
         $this->entityManager->persist($audit);
         $this->entityManager->persist($application);
@@ -150,16 +168,17 @@ class CertificateService
      * 发放证书
      *
      * @param string $applicationId 申请ID
+     *
      * @return Certificate 发放的证书
      */
     public function issueCertificate(string $applicationId): Certificate
     {
         $application = $this->applicationRepository->find($applicationId);
-        if ($application === null) {
+        if (null === $application) {
             throw new InvalidArgumentException('证书申请不存在');
         }
 
-        if ($application->getApplicationStatus() !== 'approved') {
+        if ('approved' !== $application->getApplicationStatus()) {
             throw new InvalidArgumentException('申请未通过审核，无法发放证书');
         }
 
@@ -174,10 +193,14 @@ class CertificateService
         }
 
         // 生成证书
+        $user = $application->getUser();
+        if (null === $user) {
+            throw new InvalidArgumentException('证书申请必须关联用户');
+        }
         $certificate = $this->generatorService->generateSingleCertificate(
-            $application->getUser()->getUserIdentifier(),
-            $application->getTemplate()->getId(),
-            $application->getApplicationData()
+            $user->getUserIdentifier(),
+            (string) $application->getTemplate()->getId(),
+            $application->getApplicationData() ?? []
         );
 
         // 更新申请状态
@@ -192,30 +215,31 @@ class CertificateService
     /**
      * 验证申请数据
      *
-     * @param array $applicationData 申请数据
+     * @param array<string, mixed> $applicationData 申请数据
+     *
      * @throws \InvalidArgumentException
      */
     private function validateApplicationData(array $applicationData): void
     {
         $requiredFields = ['templateId', 'type'];
-        
+
         foreach ($requiredFields as $field) {
-            if (!isset($applicationData[$field]) || empty($applicationData[$field])) {
+            if (!isset($applicationData[$field]) || '' === $applicationData[$field]) {
                 throw new InvalidArgumentException("缺少必需字段: {$field}");
             }
         }
 
         $validTypes = ['standard', 'renewal', 'upgrade'];
-        if (!in_array($applicationData['type'], $validTypes)) {
+        if (!in_array($applicationData['type'], $validTypes, true)) {
             throw new InvalidArgumentException('无效的申请类型');
         }
     }
-
 
     /**
      * 获取用户的证书列表
      *
      * @param UserInterface $user 用户对象
+     *
      * @return Certificate[] 证书列表
      */
     public function getUserCertificates(UserInterface $user): array
@@ -227,6 +251,7 @@ class CertificateService
      * 获取用户的申请列表
      *
      * @param UserInterface $user 用户对象
+     *
      * @return CertificateApplication[] 申请列表
      */
     public function getUserApplications(UserInterface $user): array
@@ -238,10 +263,11 @@ class CertificateService
      * 检查证书是否有效
      *
      * @param Certificate $certificate 证书对象
+     *
      * @return bool 是否有效
      */
     public function isCertificateValid(Certificate $certificate): bool
     {
-        return $certificate->isValid() === true;
+        return true === $certificate->isValid();
     }
-} 
+}

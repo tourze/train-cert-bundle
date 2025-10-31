@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainCertBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
@@ -15,6 +18,7 @@ use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 /**
  * 证书申请实体
  * 用于管理证书申请流程，包括申请状态、审核流程等
+ * @implements ApiArrayInterface<string, mixed>
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'job_training_certificate_application', options: ['comment' => '证书申请'])]
@@ -26,57 +30,72 @@ class CertificateApplication implements ApiArrayInterface
 
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
     #[ORM\ManyToOne(targetEntity: UserInterface::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    private UserInterface $user;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?UserInterface $user = null;
 
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
-    #[ORM\ManyToOne(targetEntity: CertificateTemplate::class)]
+    #[ORM\ManyToOne(targetEntity: CertificateTemplate::class, cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private CertificateTemplate $template;
 
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '申请类型'])]
     private string $applicationType;
 
     #[IndexColumn]
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, nullable: false, options: ['comment' => '申请状态', 'default' => 'pending'])]
     private string $applicationStatus = 'pending';
 
+    /**
+     * @var array<string, mixed>|null
+     */
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\Type(type: 'array')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '申请数据'])]
     private ?array $applicationData = null;
 
+    /**
+     * @var array<string, mixed>|null
+     */
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\Type(type: 'array')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '必需文档'])]
     private ?array $requiredDocuments = null;
 
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\Type(type: 'string')]
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '审核意见'])]
     private ?string $reviewComment = null;
 
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\Length(max: 100)]
     #[ORM\Column(length: 100, nullable: true, options: ['comment' => '审核人'])]
     private ?string $reviewer = null;
 
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\Type(type: '\DateTimeInterface')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '申请时间'])]
     private ?\DateTimeInterface $applicationTime = null;
 
     #[Groups(groups: ['admin_curd', 'restful_read', 'restful_write'])]
+    #[Assert\Type(type: '\DateTimeInterface')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '审核时间'])]
     private ?\DateTimeInterface $reviewTime = null;
 
-
-    public function getUser(): UserInterface
+    public function getUser(): ?UserInterface
     {
         return $this->user;
     }
 
-    public function setUser(UserInterface $user): self
+    public function setUser(?UserInterface $user): void
     {
         $this->user = $user;
-        return $this;
     }
 
     public function getTemplate(): CertificateTemplate
@@ -84,10 +103,9 @@ class CertificateApplication implements ApiArrayInterface
         return $this->template;
     }
 
-    public function setTemplate(CertificateTemplate $template): self
+    public function setTemplate(CertificateTemplate $template): void
     {
         $this->template = $template;
-        return $this;
     }
 
     public function getApplicationType(): string
@@ -95,10 +113,9 @@ class CertificateApplication implements ApiArrayInterface
         return $this->applicationType;
     }
 
-    public function setApplicationType(string $applicationType): self
+    public function setApplicationType(string $applicationType): void
     {
         $this->applicationType = $applicationType;
-        return $this;
     }
 
     public function getApplicationStatus(): string
@@ -106,32 +123,41 @@ class CertificateApplication implements ApiArrayInterface
         return $this->applicationStatus;
     }
 
-    public function setApplicationStatus(string $applicationStatus): self
+    public function setApplicationStatus(string $applicationStatus): void
     {
         $this->applicationStatus = $applicationStatus;
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getApplicationData(): ?array
     {
         return $this->applicationData;
     }
 
-    public function setApplicationData(?array $applicationData): self
+    /**
+     * @param array<string, mixed>|null $applicationData
+     */
+    public function setApplicationData(?array $applicationData): void
     {
         $this->applicationData = $applicationData;
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getRequiredDocuments(): ?array
     {
         return $this->requiredDocuments;
     }
 
-    public function setRequiredDocuments(?array $requiredDocuments): self
+    /**
+     * @param array<string, mixed>|null $requiredDocuments
+     */
+    public function setRequiredDocuments(?array $requiredDocuments): void
     {
         $this->requiredDocuments = $requiredDocuments;
-        return $this;
     }
 
     public function getReviewComment(): ?string
@@ -139,10 +165,9 @@ class CertificateApplication implements ApiArrayInterface
         return $this->reviewComment;
     }
 
-    public function setReviewComment(?string $reviewComment): self
+    public function setReviewComment(?string $reviewComment): void
     {
         $this->reviewComment = $reviewComment;
-        return $this;
     }
 
     public function getReviewer(): ?string
@@ -150,10 +175,9 @@ class CertificateApplication implements ApiArrayInterface
         return $this->reviewer;
     }
 
-    public function setReviewer(?string $reviewer): self
+    public function setReviewer(?string $reviewer): void
     {
         $this->reviewer = $reviewer;
-        return $this;
     }
 
     public function getApplicationTime(): ?\DateTimeInterface
@@ -161,10 +185,9 @@ class CertificateApplication implements ApiArrayInterface
         return $this->applicationTime;
     }
 
-    public function setApplicationTime(?\DateTimeInterface $applicationTime): self
+    public function setApplicationTime(?\DateTimeInterface $applicationTime): void
     {
         $this->applicationTime = $applicationTime;
-        return $this;
     }
 
     public function getReviewTime(): ?\DateTimeInterface
@@ -172,22 +195,24 @@ class CertificateApplication implements ApiArrayInterface
         return $this->reviewTime;
     }
 
-    public function setReviewTime(?\DateTimeInterface $reviewTime): self
+    public function setReviewTime(?\DateTimeInterface $reviewTime): void
     {
         $this->reviewTime = $reviewTime;
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function retrieveApiArray(): array
     {
         return [
             'id' => $this->getId(),
             'createTime' => $this->getCreateTime()?->format('Y-m-d H:i:s'),
             'updateTime' => $this->getUpdateTime()?->format('Y-m-d H:i:s'),
-            'user' => [
+            'user' => null !== $this->getUser() ? [
                 'id' => $this->getUser()->getUserIdentifier(),
                 'username' => $this->getUser()->getUserIdentifier(),
-            ],
+            ] : null,
             'template' => $this->getTemplate()->retrieveApiArray(),
             'applicationType' => $this->getApplicationType(),
             'applicationStatus' => $this->getApplicationStatus(),
@@ -202,6 +227,6 @@ class CertificateApplication implements ApiArrayInterface
 
     public function __toString(): string
     {
-        return (string)$this->id;
+        return $this->applicationType;
     }
 }

@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainCertBundle\Controller\Admin;
 
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminAction;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminCrud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
@@ -16,12 +20,16 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
+use Symfony\Component\HttpFoundation\Response;
 use Tourze\TrainCertBundle\Entity\CertificateApplication;
 
 /**
  * 证书申请管理控制器
+ *
+ * @extends AbstractCrudController<CertificateApplication>
  */
-class CertificateApplicationCrudController extends AbstractCrudController
+#[AdminCrud(routePath: '/train-cert/certificate-application', routeName: 'train_cert_certificate_application')]
+final class CertificateApplicationCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
@@ -38,7 +46,8 @@ class CertificateApplicationCrudController extends AbstractCrudController
             ->setPageTitle('edit', '编辑证书申请')
             ->setPageTitle('detail', '证书申请详情')
             ->setDefaultSort(['applicationTime' => 'DESC'])
-            ->setPaginatorPageSize(20);
+            ->setPaginatorPageSize(20)
+        ;
     }
 
     public function configureActions(Actions $actions): Actions
@@ -47,22 +56,25 @@ class CertificateApplicationCrudController extends AbstractCrudController
             ->linkToCrudAction('approveApplication')
             ->setCssClass('btn btn-success')
             ->displayIf(static function (CertificateApplication $application) {
-                return $application->getApplicationStatus() === 'pending';
-            });
+                return 'pending' === $application->getApplicationStatus();
+            })
+        ;
 
         $reject = Action::new('reject', '审核拒绝', 'fa fa-times')
             ->linkToCrudAction('rejectApplication')
             ->setCssClass('btn btn-danger')
             ->displayIf(static function (CertificateApplication $application) {
-                return $application->getApplicationStatus() === 'pending';
-            });
+                return 'pending' === $application->getApplicationStatus();
+            })
+        ;
 
         $issue = Action::new('issue', '发放证书', 'fa fa-certificate')
             ->linkToCrudAction('issueCertificate')
             ->setCssClass('btn btn-primary')
             ->displayIf(static function (CertificateApplication $application) {
-                return $application->getApplicationStatus() === 'approved';
-            });
+                return 'approved' === $application->getApplicationStatus();
+            })
+        ;
 
         return $actions
             ->add(Crud::PAGE_INDEX, $approve)
@@ -70,7 +82,8 @@ class CertificateApplicationCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, $issue)
             ->add(Crud::PAGE_DETAIL, $approve)
             ->add(Crud::PAGE_DETAIL, $reject)
-            ->add(Crud::PAGE_DETAIL, $issue);
+            ->add(Crud::PAGE_DETAIL, $issue)
+        ;
     }
 
     public function configureFilters(Filters $filters): Filters
@@ -89,7 +102,8 @@ class CertificateApplicationCrudController extends AbstractCrudController
                     '续期申请' => 'renewal',
                     '升级申请' => 'upgrade',
                 ]))
-            ->add(DateTimeFilter::new('applicationTime', '申请时间'));
+            ->add(DateTimeFilter::new('applicationTime', '申请时间'))
+        ;
     }
 
     public function configureFields(string $pageName): iterable
@@ -156,30 +170,36 @@ class CertificateApplicationCrudController extends AbstractCrudController
     /**
      * 审核通过操作
      */
-    public function approveApplication()
+    #[AdminAction(routePath: '/approve/{entityId}', routeName: 'train_cert_certificate_application_approve')]
+    public function approveApplication(): Response
     {
         // TODO: 实现审核通过逻辑
         $this->addFlash('success', '申请审核通过');
+
         return $this->redirectToRoute('admin');
     }
 
     /**
      * 审核拒绝操作
      */
-    public function rejectApplication()
+    #[AdminAction(routePath: '/reject/{entityId}', routeName: 'train_cert_certificate_application_reject')]
+    public function rejectApplication(): Response
     {
         // TODO: 实现审核拒绝逻辑
         $this->addFlash('warning', '申请已拒绝');
+
         return $this->redirectToRoute('admin');
     }
 
     /**
      * 发放证书操作
      */
-    public function issueCertificate()
+    #[AdminAction(routePath: '/issue/{entityId}', routeName: 'train_cert_certificate_application_issue')]
+    public function issueCertificate(): Response
     {
         // TODO: 实现证书发放逻辑
         $this->addFlash('success', '证书发放成功');
+
         return $this->redirectToRoute('admin');
     }
-} 
+}

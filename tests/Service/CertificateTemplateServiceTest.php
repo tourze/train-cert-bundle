@@ -2,291 +2,550 @@
 
 namespace Tourze\TrainCertBundle\Tests\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Tourze\TrainCertBundle\Entity\CertificateTemplate;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
+use Tourze\TrainCertBundle\Exception\InvalidArgumentException;
 use Tourze\TrainCertBundle\Repository\CertificateTemplateRepository;
 use Tourze\TrainCertBundle\Service\CertificateTemplateService;
 
 /**
- * 证书模板服务测试
+ * 证书模板服务集成测试
+ * 测试模板的完整生命周期：创建、更新、查询、验证、复制等
+ *
+ * @internal
  */
-class CertificateTemplateServiceTest extends TestCase
+#[CoversClass(CertificateTemplateService::class)]
+#[RunTestsInSeparateProcesses]
+final class CertificateTemplateServiceTest extends AbstractIntegrationTestCase
 {
     private CertificateTemplateService $service;
-    private EntityManagerInterface&MockObject $entityManager;
-    private CertificateTemplateRepository&MockObject $repository;
 
-    protected function setUp(): void
+    private CertificateTemplateRepository $repository;
+
+    protected function onSetUp(): void
     {
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->repository = $this->createMock(CertificateTemplateRepository::class);
-        
-        $this->service = new CertificateTemplateService(
-            $this->entityManager,
-            $this->repository
-        );
+        $this->service = self::getService(CertificateTemplateService::class);
+        $this->repository = self::getService(CertificateTemplateRepository::class);
+
+        // 清理测试数据
+        $this->clearTestData();
     }
 
     public function testCreateTemplate(): void
     {
         $templateData = [
-            'templateName' => '安全生产培训证书',
+            'templateName' => '安全生产证书模板',
             'templateType' => 'safety',
-            'templatePath' => '/templates/safety.pdf',
-            'templateConfig' => ['validityPeriod' => 365],
-            'fieldMapping' => ['userName' => 'holder_name'],
+            'templatePath' => '/templates/safety_cert.html',
+            'templateConfig' => ['width' => 800, 'height' => 600],
+            'fieldMapping' => ['name' => 'userName', 'date' => 'issueDate'],
             'isDefault' => true,
             'isActive' => true,
         ];
 
-        $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($this->isInstanceOf(CertificateTemplate::class));
+        $template = $this->service->createTemplate($templateData);
 
-        $this->entityManager->expects($this->once())
-            ->method('flush');
+        $this->assertNotNull($template->getId());
+        $this->assertSame('安全生产证书模板', $template->getTemplateName());
+        $this->assertSame('safety', $template->getTemplateType());
+        $this->assertSame('/templates/safety_cert.html', $template->getTemplatePath());
+        $this->assertSame(['width' => 800, 'height' => 600], $template->getTemplateConfig());
+        $this->assertSame(['name' => 'userName', 'date' => 'issueDate'], $template->getFieldMapping());
+        $this->assertTrue($template->isDefault());
+        $this->assertTrue($template->isActive());
+
+        // 验证数据已持久化到数据库
+        self::getEntityManager()->clear();
+        $persistedTemplate = $this->repository->find($template->getId());
+        $this->assertNotNull($persistedTemplate);
+        $this->assertSame('安全生产证书模板', $persistedTemplate->getTemplateName());
+    }
+
+    public function testCreateTemplateWithMinimalData(): void
+    {
+        $templateData = [
+            'templateName' => '简单模板',
+            'templateType' => 'skill',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ];
 
         $template = $this->service->createTemplate($templateData);
 
-        $this->assertInstanceOf(CertificateTemplate::class, $template);
-        $this->assertEquals('安全生产培训证书', $template->getTemplateName());
-        $this->assertEquals('safety', $template->getTemplateType());
-        $this->assertEquals('/templates/safety.pdf', $template->getTemplatePath());
-        $this->assertEquals(['validityPeriod' => 365], $template->getTemplateConfig());
-        $this->assertEquals(['userName' => 'holder_name'], $template->getFieldMapping());
-        $this->assertTrue($template->isDefault());
+        $this->assertSame('简单模板', $template->getTemplateName());
+        $this->assertSame('skill', $template->getTemplateType());
+        $this->assertNull($template->getTemplatePath());
+        $this->assertSame([], $template->getTemplateConfig());
+        $this->assertSame([], $template->getFieldMapping());
+        $this->assertFalse($template->isDefault());
         $this->assertTrue($template->isActive());
     }
 
-    public function testCreateTemplateWithInvalidData(): void
+    public function testCreateTemplateThrowsExceptionForMissingRequiredFields(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('缺少必需字段: templateName');
 
-        $templateData = [
-            'templateType' => 'safety',
-        ];
-
-        $this->service->createTemplate($templateData);
+        $this->service->createTemplate(['templateType' => 'safety']);
     }
 
-    public function testCreateTemplateWithInvalidType(): void
+    public function testCreateTemplateThrowsExceptionForInvalidType(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('无效的模板类型');
 
         $templateData = [
-            'templateName' => '测试模板',
+            'templateName' => '无效类型模板',
             'templateType' => 'invalid_type',
         ];
 
         $this->service->createTemplate($templateData);
     }
 
-    public function testUpdateTemplate(): void
+    public function testCreateTemplateHandlesDefaultTemplateExclusivity(): void
     {
-        $templateId = 'template123';
-        $existingTemplate = new CertificateTemplate();
-        $existingTemplate->setTemplateName('原始模板');
-        $existingTemplate->setTemplateType('safety');
-
-        $this->repository->expects($this->once())
-            ->method('find')
-            ->with($templateId)
-            ->willReturn($existingTemplate);
-
-        $this->entityManager->expects($this->once())
-            ->method('flush');
-
-        $updateData = [
-            'templateName' => '更新后的模板',
-            'templateType' => 'skill',
+        // 创建第一个默认模板
+        $firstTemplateData = [
+            'templateName' => '第一个默认模板',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => true,
+            'isActive' => true,
         ];
+        $firstTemplate = $this->service->createTemplate($firstTemplateData);
+        $this->assertTrue($firstTemplate->isDefault());
 
-        $updatedTemplate = $this->service->updateTemplate($templateId, $updateData);
+        // 创建第二个默认模板，应该取消第一个的默认状态
+        $secondTemplateData = [
+            'templateName' => '第二个默认模板',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => true,
+            'isActive' => true,
+        ];
+        $secondTemplate = $this->service->createTemplate($secondTemplateData);
 
-        $this->assertEquals('更新后的模板', $updatedTemplate->getTemplateName());
-        $this->assertEquals('skill', $updatedTemplate->getTemplateType());
+        // 重新获取第一个模板，验证默认状态已被取消
+        self::getEntityManager()->refresh($firstTemplate);
+        $this->assertFalse($firstTemplate->isDefault());
+        $this->assertTrue($secondTemplate->isDefault());
     }
 
-    public function testUpdateNonExistentTemplate(): void
+    public function testUpdateTemplate(): void
     {
-        $templateId = 'nonexistent';
+        // 创建原始模板
+        $originalData = [
+            'templateName' => '原始模板',
+            'templateType' => 'management',
+            'templatePath' => '/old/path.html',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ];
+        $template = $this->service->createTemplate($originalData);
 
-        $this->repository->expects($this->once())
-            ->method('find')
-            ->with($templateId)
-            ->willReturn(null);
+        // 更新模板
+        $updateData = [
+            'templateName' => '更新后的模板',
+            'templatePath' => '/new/path.html',
+            'templateConfig' => ['updated' => true],
+            'isActive' => false,
+        ];
 
-        $this->expectException(\InvalidArgumentException::class);
+        $templateId = $template->getId();
+        $this->assertNotNull($templateId, 'Template ID should not be null');
+        $updatedTemplate = $this->service->updateTemplate($templateId, $updateData);
+
+        $this->assertSame($template->getId(), $updatedTemplate->getId());
+        $this->assertSame('更新后的模板', $updatedTemplate->getTemplateName());
+        $this->assertSame('management', $updatedTemplate->getTemplateType()); // 未更新
+        $this->assertSame('/new/path.html', $updatedTemplate->getTemplatePath());
+        $this->assertSame(['updated' => true], $updatedTemplate->getTemplateConfig());
+        $this->assertFalse($updatedTemplate->isActive());
+    }
+
+    public function testUpdateTemplateThrowsExceptionForNonExistentTemplate(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('证书模板不存在');
 
-        $this->service->updateTemplate($templateId, []);
+        $this->service->updateTemplate('non-existent-id', ['templateName' => '更新']);
+    }
+
+    public function testUpdateTemplateHandlesDefaultTemplateExclusivity(): void
+    {
+        // 创建两个同类型的模板
+        $template1 = $this->service->createTemplate([
+            'templateName' => '模板1',
+            'templateType' => 'special',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => true,
+            'isActive' => true,
+        ]);
+
+        $template2 = $this->service->createTemplate([
+            'templateName' => '模板2',
+            'templateType' => 'special',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
+
+        // 将第二个模板设为默认
+        $template2Id = $template2->getId();
+        $this->assertNotNull($template2Id, 'Template2 ID should not be null');
+        $this->service->updateTemplate($template2Id, ['isDefault' => true]);
+
+        // 验证第一个模板不再是默认的
+        self::getEntityManager()->refresh($template1);
+        self::getEntityManager()->refresh($template2);
+
+        $this->assertFalse($template1->isDefault());
+        $this->assertTrue($template2->isDefault());
     }
 
     public function testRenderCertificate(): void
     {
-        $templateId = 'template123';
-        $template = new CertificateTemplate();
-        $template->setTemplateName('测试模板');
-        $template->setIsActive(true);
-
-        $this->repository->expects($this->once())
-            ->method('find')
-            ->with($templateId)
-            ->willReturn($template);
+        $template = $this->service->createTemplate([
+            'templateName' => '渲染模板',
+            'templateType' => 'safety',
+            'templatePath' => '/templates/render.html',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
 
         $data = ['userName' => '张三', 'courseName' => '安全培训'];
+        $templateId = $template->getId();
+        $this->assertNotNull($templateId, 'Template ID should not be null');
         $result = $this->service->renderCertificate($templateId, $data);
-        $this->assertStringContainsString('测试模板', $result);
+
+        // 目前是占位符实现，检查基本格式
+        $this->assertStringContainsString('渲染的证书内容', $result);
+        $this->assertStringContainsString('渲染模板', $result);
     }
 
-    public function testRenderCertificateWithInactiveTemplate(): void
+    public function testRenderCertificateThrowsExceptionForNonExistentTemplate(): void
     {
-        $templateId = 'template123';
-        $template = new CertificateTemplate();
-        $template->setTemplateName('测试模板');
-        $template->setIsActive(false);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('证书模板不存在');
 
-        $this->repository->expects($this->once())
-            ->method('find')
-            ->with($templateId)
-            ->willReturn($template);
+        $this->service->renderCertificate('non-existent-id', []);
+    }
 
-        $this->expectException(\InvalidArgumentException::class);
+    public function testRenderCertificateThrowsExceptionForInactiveTemplate(): void
+    {
+        $template = $this->service->createTemplate([
+            'templateName' => '非活跃模板',
+            'templateType' => 'skill',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => false,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('证书模板未启用');
 
+        $templateId = $template->getId();
+        $this->assertNotNull($templateId, 'Template ID should not be null');
         $this->service->renderCertificate($templateId, []);
     }
 
     public function testPreviewTemplate(): void
     {
-        $templateId = 'template123';
-        $template = new CertificateTemplate();
-        $template->setTemplateName('预览模板');
+        $template = $this->service->createTemplate([
+            'templateName' => '预览模板',
+            'templateType' => 'management',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
 
-        $this->repository->expects($this->once())
-            ->method('find')
-            ->with($templateId)
-            ->willReturn($template);
-
-        $sampleData = ['userName' => '示例用户'];
+        $sampleData = ['customField' => 'customValue'];
+        $templateId = $template->getId();
+        $this->assertNotNull($templateId, 'Template ID should not be null');
         $result = $this->service->previewTemplate($templateId, $sampleData);
+
         $this->assertStringContainsString('预览模板', $result);
+    }
+
+    public function testPreviewTemplateThrowsExceptionForNonExistentTemplate(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('证书模板不存在');
+
+        $this->service->previewTemplate('non-existent-id', []);
     }
 
     public function testValidateTemplate(): void
     {
-        $templateId = 'template123';
-        $template = new CertificateTemplate();
-        $template->setTemplateName('验证模板');
-        $template->setTemplatePath('/nonexistent/path');
+        // 创建配置完整的有效模板
+        $template = $this->service->createTemplate([
+            'templateName' => '有效模板',
+            'templateType' => 'safety',
+            'templatePath' => '/valid/path.html',
+            'templateConfig' => ['valid' => true],
+            'fieldMapping' => ['field1' => 'value1'],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
 
-        $this->repository->expects($this->once())
-            ->method('find')
-            ->with($templateId)
-            ->willReturn($template);
-
+        $templateId = $template->getId();
+        $this->assertNotNull($templateId, 'Template ID should not be null');
         $result = $this->service->validateTemplate($templateId);
-        $this->assertArrayHasKey('valid', $result);
-        $this->assertArrayHasKey('errors', $result);
-        $this->assertArrayHasKey('warnings', $result);
+
+        $this->assertFalse($result['valid']); // 文件不存在所以无效
+        $errors = $result['errors'];
+        $this->assertIsArray($errors);
+        $this->assertContains('模板文件不存在', $errors);
+        $this->assertEmpty($result['warnings']);
+    }
+
+    public function testValidateTemplateWithEmptyPath(): void
+    {
+        $template = $this->service->createTemplate([
+            'templateName' => '无路径模板',
+            'templateType' => 'skill',
+            'templatePath' => '',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
+
+        $templateId = $template->getId();
+        $this->assertNotNull($templateId, 'Template ID should not be null');
+        $result = $this->service->validateTemplate($templateId);
+
         $this->assertFalse($result['valid']);
-        $this->assertContains('模板文件不存在', $result['errors']);
+        $errors = $result['errors'];
+        $this->assertIsArray($errors);
+        $this->assertContains('模板路径不能为空', $errors);
+    }
+
+    public function testValidateTemplateWithWarnings(): void
+    {
+        $template = $this->service->createTemplate([
+            'templateName' => '警告模板',
+            'templateType' => 'special',
+            'templatePath' => '/some/path.html',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
+
+        $templateId = $template->getId();
+        $this->assertNotNull($templateId, 'Template ID should not be null');
+        $result = $this->service->validateTemplate($templateId);
+
+        $warnings = $result['warnings'];
+        $this->assertIsArray($warnings);
+        $this->assertContains('模板配置为空', $warnings);
+        $this->assertContains('字段映射为空', $warnings);
     }
 
     public function testDuplicateTemplate(): void
     {
-        $sourceTemplateId = 'source123';
-        $sourceTemplate = new CertificateTemplate();
-        $sourceTemplate->setTemplateName('原始模板');
-        $sourceTemplate->setTemplateType('safety');
-        $sourceTemplate->setTemplatePath('/templates/safety.pdf');
-        $sourceTemplate->setTemplateConfig(['test' => 'config']);
-        $sourceTemplate->setFieldMapping(['test' => 'mapping']);
+        $originalTemplate = $this->service->createTemplate([
+            'templateName' => '原始模板',
+            'templateType' => 'safety',
+            'templatePath' => '/original/path.html',
+            'templateConfig' => ['original' => true],
+            'fieldMapping' => ['orig' => 'field'],
+            'isDefault' => true,
+            'isActive' => true,
+        ]);
 
-        $this->repository->expects($this->once())
-            ->method('find')
-            ->with($sourceTemplateId)
-            ->willReturn($sourceTemplate);
+        $originalTemplateId = $originalTemplate->getId();
+        $this->assertNotNull($originalTemplateId, 'Original template ID should not be null');
+        $duplicatedTemplate = $this->service->duplicateTemplate($originalTemplateId);
 
-        $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($this->isInstanceOf(CertificateTemplate::class));
+        // 验证复制的属性
+        $this->assertSame('原始模板 (副本)', $duplicatedTemplate->getTemplateName());
+        $this->assertSame('safety', $duplicatedTemplate->getTemplateType());
+        $this->assertSame('/original/path.html', $duplicatedTemplate->getTemplatePath());
+        $this->assertSame(['original' => true], $duplicatedTemplate->getTemplateConfig());
+        $this->assertSame(['orig' => 'field'], $duplicatedTemplate->getFieldMapping());
 
-        $this->entityManager->expects($this->once())
-            ->method('flush');
+        // 验证副本的特殊属性
+        $this->assertFalse($duplicatedTemplate->isDefault()); // 副本不能是默认的
+        $this->assertFalse($duplicatedTemplate->isActive());  // 副本默认不启用
 
-        $duplicatedTemplate = $this->service->duplicateTemplate($sourceTemplateId);
-
-        $this->assertInstanceOf(CertificateTemplate::class, $duplicatedTemplate);
-        $this->assertEquals('原始模板 (副本)', $duplicatedTemplate->getTemplateName());
-        $this->assertEquals('safety', $duplicatedTemplate->getTemplateType());
-        $this->assertEquals('/templates/safety.pdf', $duplicatedTemplate->getTemplatePath());
-        $this->assertEquals(['test' => 'config'], $duplicatedTemplate->getTemplateConfig());
-        $this->assertEquals(['test' => 'mapping'], $duplicatedTemplate->getFieldMapping());
-        $this->assertFalse($duplicatedTemplate->isDefault()); // 副本不能是默认模板
-        $this->assertFalse($duplicatedTemplate->isActive()); // 副本默认不启用
+        // 验证是不同的实体
+        $this->assertNotSame($originalTemplate->getId(), $duplicatedTemplate->getId());
     }
 
-    public function testGetAvailableTemplates(): void
+    public function testDuplicateTemplateThrowsExceptionForNonExistentTemplate(): void
     {
-        $templates = [
-            new CertificateTemplate(),
-            new CertificateTemplate(),
-        ];
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('源证书模板不存在');
 
-        $this->repository->expects($this->once())
-            ->method('findActiveTemplates')
-            ->willReturn($templates);
+        $this->service->duplicateTemplate('non-existent-id');
+    }
 
-        $result = $this->service->getAvailableTemplates();
+    public function testGetAvailableTemplatesAll(): void
+    {
+        // 创建多种模板
+        $activeTemplate1 = $this->service->createTemplate([
+            'templateName' => '活跃模板1',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
 
-        $this->assertEquals($templates, $result);
+        $activeTemplate2 = $this->service->createTemplate([
+            'templateName' => '活跃模板2',
+            'templateType' => 'skill',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
+
+        $inactiveTemplate = $this->service->createTemplate([
+            'templateName' => '非活跃模板',
+            'templateType' => 'management',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => false,
+        ]);
+
+        $availableTemplates = $this->service->getAvailableTemplates();
+
+        $this->assertCount(2, $availableTemplates);
+
+        $templateNames = array_map(fn ($t) => $t->getTemplateName(), $availableTemplates);
+        $this->assertContains('活跃模板1', $templateNames);
+        $this->assertContains('活跃模板2', $templateNames);
+        $this->assertNotContains('非活跃模板', $templateNames);
     }
 
     public function testGetAvailableTemplatesByType(): void
     {
-        $type = 'safety';
-        $templates = [new CertificateTemplate()];
+        $this->service->createTemplate([
+            'templateName' => '安全模板',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
 
-        $this->repository->expects($this->once())
-            ->method('findByType')
-            ->with($type)
-            ->willReturn($templates);
+        $this->service->createTemplate([
+            'templateName' => '技能模板',
+            'templateType' => 'skill',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
 
-        $result = $this->service->getAvailableTemplates($type);
+        $safetyTemplates = $this->service->getAvailableTemplates('safety');
+        $this->assertCount(1, $safetyTemplates);
+        $this->assertSame('安全模板', $safetyTemplates[0]->getTemplateName());
 
-        $this->assertEquals($templates, $result);
+        $skillTemplates = $this->service->getAvailableTemplates('skill');
+        $this->assertCount(1, $skillTemplates);
+        $this->assertSame('技能模板', $skillTemplates[0]->getTemplateName());
+
+        $nonExistentTypeTemplates = $this->service->getAvailableTemplates('nonexistent');
+        $this->assertEmpty($nonExistentTypeTemplates);
     }
 
     public function testGetDefaultTemplate(): void
     {
-        $template = new CertificateTemplate();
+        // 创建默认和非默认模板
+        $defaultTemplate = $this->service->createTemplate([
+            'templateName' => '默认模板',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => true,
+            'isActive' => true,
+        ]);
 
-        $this->repository->expects($this->once())
-            ->method('findDefaultTemplate')
-            ->willReturn($template);
+        $this->service->createTemplate([
+            'templateName' => '非默认模板',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
 
-        $result = $this->service->getDefaultTemplate();
-
-        $this->assertEquals($template, $result);
+        $foundDefault = $this->service->getDefaultTemplate();
+        $this->assertNotNull($foundDefault);
+        $this->assertSame($defaultTemplate->getId(), $foundDefault->getId());
     }
 
     public function testGetDefaultTemplateByType(): void
     {
-        $type = 'safety';
-        $template = new CertificateTemplate();
+        $this->service->createTemplate([
+            'templateName' => '安全默认模板',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => true,
+            'isActive' => true,
+        ]);
 
-        $this->repository->expects($this->once())
-            ->method('findDefaultTemplateByType')
-            ->with($type)
-            ->willReturn($template);
+        $this->service->createTemplate([
+            'templateName' => '技能默认模板',
+            'templateType' => 'skill',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => true,
+            'isActive' => true,
+        ]);
 
-        $result = $this->service->getDefaultTemplate($type);
+        $safetyDefault = $this->service->getDefaultTemplate('safety');
+        $this->assertNotNull($safetyDefault);
+        $this->assertSame('安全默认模板', $safetyDefault->getTemplateName());
 
-        $this->assertEquals($template, $result);
+        $skillDefault = $this->service->getDefaultTemplate('skill');
+        $this->assertNotNull($skillDefault);
+        $this->assertSame('技能默认模板', $skillDefault->getTemplateName());
+
+        $nonExistentDefault = $this->service->getDefaultTemplate('nonexistent');
+        $this->assertNull($nonExistentDefault);
     }
-} 
+
+    public function testGetDefaultTemplateReturnsNullWhenNoDefault(): void
+    {
+        $this->service->createTemplate([
+            'templateName' => '非默认模板',
+            'templateType' => 'safety',
+            'templateConfig' => [],
+            'fieldMapping' => [],
+            'isDefault' => false,
+            'isActive' => true,
+        ]);
+
+        $defaultTemplate = $this->service->getDefaultTemplate();
+        $this->assertNull($defaultTemplate);
+    }
+
+    /**
+     * 清理数据库中的测试数据
+     */
+    private function clearTestData(): void
+    {
+        $connection = self::getEntityManager()->getConnection();
+        $connection->executeStatement('DELETE FROM job_training_certificate_template');
+    }
+}

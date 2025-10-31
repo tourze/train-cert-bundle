@@ -2,6 +2,7 @@
 
 namespace Tourze\TrainCertBundle\Command;
 
+use Knp\Snappy\Image;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -12,9 +13,9 @@ use Tourze\TrainCertBundle\Exception\CertificateException;
 #[AsCommand(name: self::NAME, description: '生成证书图片')]
 class GenerateCertificateImageCommand extends Command
 {
-    
     public const NAME = 'job-training:generate-certificate-image';
-public function __construct(
+
+    public function __construct(
         private readonly KernelInterface $kernel,
     ) {
         parent::__construct();
@@ -39,7 +40,7 @@ public function __construct(
         $outputFile = __DIR__ . '/output.png';
         @unlink($outputFile);
 
-        $snappy = new \Knp\Snappy\Image($binFile);
+        $snappy = new Image($binFile);
 
         $snappy->setOption('width', '800');
 
