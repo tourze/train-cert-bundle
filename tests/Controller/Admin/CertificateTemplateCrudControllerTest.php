@@ -292,8 +292,7 @@ final class CertificateTemplateCrudControllerTest extends AbstractEasyAdminContr
 
     public function testDuplicateTemplateAction(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client);
+        $client = self::createAuthenticatedClient();
 
         // 创建证书模板
         $entityManager = self::getService(EntityManagerInterface::class);
@@ -316,8 +315,7 @@ final class CertificateTemplateCrudControllerTest extends AbstractEasyAdminContr
 
     public function testPreviewTemplateAction(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client);
+        $client = self::createAuthenticatedClient();
 
         // 创建证书模板
         $entityManager = self::getService(EntityManagerInterface::class);
