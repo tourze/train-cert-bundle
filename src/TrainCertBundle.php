@@ -12,6 +12,7 @@ use Tourze\DoctrineTimestampBundle\DoctrineTimestampBundle;
 use Tourze\DoctrineUserBundle\DoctrineUserBundle;
 use Tourze\JsonRPCLockBundle\JsonRPCLockBundle;
 use Tourze\JsonRPCSecurityBundle\JsonRPCSecurityBundle;
+use Tourze\EasyAdminMenuBundle\EasyAdminMenuBundle;
 
 class TrainCertBundle extends Bundle implements BundleDependencyInterface
 {
@@ -26,6 +27,7 @@ class TrainCertBundle extends Bundle implements BundleDependencyInterface
             SecurityBundle::class => ['all' => true],
             JsonRPCLockBundle::class => ['all' => true],
             JsonRPCSecurityBundle::class => ['all' => true],
+            EasyAdminMenuBundle::class => ['all' => true],
         ];
     }
 }
