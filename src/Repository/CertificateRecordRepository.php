@@ -38,6 +38,8 @@ class CertificateRecordRepository extends ServiceEntityRepository
 
     /**
      * 根据证书编号查找记录
+     *
+     * @phpstan-return CertificateRecord|null
      */
     public function findByCertificateNumber(string $certificateNumber): ?CertificateRecord
     {
@@ -46,6 +48,8 @@ class CertificateRecordRepository extends ServiceEntityRepository
 
     /**
      * 根据验证码查找记录
+     *
+     * @phpstan-return CertificateRecord|null
      */
     public function findByVerificationCode(string $verificationCode): ?CertificateRecord
     {

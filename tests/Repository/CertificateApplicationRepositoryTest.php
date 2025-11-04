@@ -14,6 +14,7 @@ use Tourze\TrainCertBundle\Entity\CertificateTemplate;
 use Tourze\TrainCertBundle\Repository\CertificateApplicationRepository;
 
 /**
+ * @template-extends AbstractRepositoryTestCase<CertificateApplication>
  * @internal
  */
 #[CoversClass(CertificateApplicationRepository::class)]
@@ -270,9 +271,9 @@ final class CertificateApplicationRepositoryTest extends AbstractRepositoryTestC
     }
 
     /**
-     * @return ServiceEntityRepository<CertificateApplication>
+     * @return CertificateApplicationRepository
      */
-    protected function getRepository(): ServiceEntityRepository
+    protected function getRepository(): CertificateApplicationRepository
     {
         return $this->repository;
     }
