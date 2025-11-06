@@ -11,9 +11,14 @@ use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Tourze\TrainCertBundle\Entity\CertificateApplication;
 use Tourze\TrainCertBundle\Entity\CertificateTemplate;
+use Tourze\UserServiceContracts\UserManagerInterface;
 
 class CertificateApplicationFixtures extends Fixture implements DependentFixtureInterface
 {
+    public function __construct(
+        private readonly UserManagerInterface $userManager,
+    ) {
+    }
     public function load(ObjectManager $manager): void
     {
         // 获取已存在的证书模板
@@ -117,10 +122,12 @@ class CertificateApplicationFixtures extends Fixture implements DependentFixture
 
         // 创建3个测试用户
         for ($i = 1; $i <= 3; ++$i) {
-            $testUser = new BizUser();
-            $testUser->setUsername("cert_fixtures_user_{$i}_" . uniqid());
-            $testUser->setEmail("cert_fixtures_{$i}@localhost.test");
-            $testUser->setPasswordHash('$2y$13$test_hash');
+            $testUser = $this->userManager->createUser(
+                userIdentifier: "cert_fixtures_user_{$i}",
+                nickName: "证书申请测试用户 {$i}",
+                password: 'password',
+                roles: ['ROLE_USER']
+            );
             $manager->persist($testUser);
             $users[] = $testUser;
         }
