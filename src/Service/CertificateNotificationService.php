@@ -17,12 +17,12 @@ use Tourze\TrainCertBundle\Repository\CertificateRecordRepository;
  */
 #[WithMonologChannel(channel: 'train_cert')]
 #[Autoconfigure(public: true)]
-class CertificateNotificationService
+readonly class CertificateNotificationService
 {
     public function __construct(
-        private readonly MailerInterface $mailer,
-        private readonly LoggerInterface $logger,
-        private readonly CertificateRecordRepository $recordRepository,
+        private MailerInterface $mailer,
+        private LoggerInterface $logger,
+        private CertificateRecordRepository $recordRepository,
     ) {
     }
 

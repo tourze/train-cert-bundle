@@ -11,12 +11,12 @@ use Tourze\TrainCertBundle\Repository\CertificateTemplateRepository;
  * 证书模板服务类
  * 负责证书模板的管理、渲染、验证等功能
  */
-class CertificateTemplateService
+readonly class CertificateTemplateService
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly CertificateTemplateRepository $templateRepository,
-        private readonly TemplateValidationService $validationService,
+        private EntityManagerInterface $entityManager,
+        private CertificateTemplateRepository $templateRepository,
+        private TemplateValidationService $validationService,
     ) {
     }
 

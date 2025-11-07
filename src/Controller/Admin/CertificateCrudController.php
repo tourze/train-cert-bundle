@@ -74,10 +74,17 @@ final class CertificateCrudController extends AbstractCrudController
                 ->setMaxLength(100)
                 ->setHelp('证书的标题名称'),
 
-            AssociationField::new('user', '证书持有人')
+            TextField::new('user', '证书持有人')
                 ->setRequired(true)
-                ->autocomplete()
-                ->setHelp('拥有此证书的用户'),
+                ->formatValue(static function ($value) {
+                    if (null === $value) {
+                        return '';
+                    }
+                    return method_exists($value, 'getUserIdentifier')
+                        ? $value->getUserIdentifier()
+                        : (string) $value;
+                })
+                ->setHelp('证书持有人的用户标识符'),
 
             UrlField::new('imgUrl', '证书文件')
                 ->setHelp('证书图片或PDF文件的URL地址')

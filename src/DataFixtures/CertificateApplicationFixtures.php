@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tourze\TrainCertBundle\DataFixtures;
 
-use BizUserBundle\Entity\BizUser;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -101,8 +100,8 @@ class CertificateApplicationFixtures extends Fixture implements DependentFixture
 
         foreach ($userReferences as $reference) {
             try {
-                if ($this->hasReference($reference, BizUser::class)) {
-                    $users[] = $this->getReference($reference, BizUser::class);
+                if ($this->hasReference($reference, UserInterface::class)) {
+                    $users[] = $this->getReference($reference, UserInterface::class);
                 }
             } catch (\Exception) {
                 // 引用不存在，继续尝试下一个

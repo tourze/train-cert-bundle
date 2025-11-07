@@ -112,9 +112,17 @@ final class CertificateApplicationCrudController extends AbstractCrudController
             IdField::new('id', 'ID')
                 ->hideOnForm(),
 
-            AssociationField::new('user', '申请用户')
+            TextField::new('user', '申请用户')
                 ->setRequired(true)
-                ->autocomplete(),
+                ->formatValue(static function ($value) {
+                    if (null === $value) {
+                        return '';
+                    }
+                    return method_exists($value, 'getUserIdentifier')
+                        ? $value->getUserIdentifier()
+                        : (string) $value;
+                })
+                ->setHelp('用户标识符'),
 
             AssociationField::new('template', '证书模板')
                 ->setRequired(true)

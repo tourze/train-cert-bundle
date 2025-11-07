@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tourze\TrainCertBundle\DataFixtures;
 
-use BizUserBundle\Entity\BizUser;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Security\Core\User\UserInterface;
