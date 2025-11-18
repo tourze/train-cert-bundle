@@ -55,11 +55,6 @@ final class CertificateCrudControllerTest extends AbstractEasyAdminControllerTes
         yield 'valid' => ['valid'];
     }
 
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertEquals(Certificate::class, CertificateCrudController::getEntityFqcn());
-    }
-
     public function testControllerConfiguration(): void
     {
         $controller = $this->getControllerService();

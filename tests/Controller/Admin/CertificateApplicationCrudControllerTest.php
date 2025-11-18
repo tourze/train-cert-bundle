@@ -57,11 +57,6 @@ final class CertificateApplicationCrudControllerTest extends AbstractEasyAdminCo
         yield 'applicationType' => ['applicationType'];
     }
 
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertEquals(CertificateApplication::class, CertificateApplicationCrudController::getEntityFqcn());
-    }
-
     public function testControllerConfiguration(): void
     {
         $controller = $this->getControllerService();

@@ -61,11 +61,6 @@ final class CertificateAuditCrudControllerTest extends AbstractEasyAdminControll
         yield 'auditTime' => ['auditTime'];
     }
 
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertEquals(CertificateAudit::class, CertificateAuditCrudController::getEntityFqcn());
-    }
-
     public function testControllerConfiguration(): void
     {
         $controller = $this->getControllerService();

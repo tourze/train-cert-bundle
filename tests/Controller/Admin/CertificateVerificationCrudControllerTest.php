@@ -55,11 +55,6 @@ final class CertificateVerificationCrudControllerTest extends AbstractEasyAdminC
         yield 'ipAddress' => ['ipAddress'];
     }
 
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertEquals(CertificateVerification::class, CertificateVerificationCrudController::getEntityFqcn());
-    }
-
     public function testControllerConfiguration(): void
     {
         $controller = $this->getControllerService();

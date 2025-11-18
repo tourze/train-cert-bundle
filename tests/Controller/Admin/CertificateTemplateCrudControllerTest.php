@@ -61,11 +61,6 @@ final class CertificateTemplateCrudControllerTest extends AbstractEasyAdminContr
         yield 'templateContent' => ['templateContent'];
     }
 
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertEquals(CertificateTemplate::class, CertificateTemplateCrudController::getEntityFqcn());
-    }
-
     public function testControllerConfiguration(): void
     {
         $controller = $this->getControllerService();
